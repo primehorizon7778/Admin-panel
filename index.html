@@ -1,1 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Horizon • Admin Panel v4.0</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- HTML2PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Custom CSS File -->
+    <link rel="stylesheet" href="index.css">
+</head>
+<body class="bg-slate-950 text-slate-200">
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 z-[999] flex items-center justify-center login-container">
+        <div class="w-full max-w-md mx-4">
+            <div class="flex justify-center mb-8">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-cyan-500 via-cyan-400 to-emerald-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-cyan-500/40">
+                        <i class="fa-solid fa-shield-halved text-white text-4xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-4xl font-black tracking-tighter">PRIME HORIZON</h1>
+                        <p class="text-emerald-400 text-sm font-bold tracking-[3px]">ADMIN PANEL v4.1</p>
+                    </div>
+                </div>
+            </div>
 
+            <div class="glass rounded-3xl p-8 border border-slate-700/60 shadow-2xl">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-extrabold">Admin Login</h2>
+                    <p class="text-slate-400 text-sm mt-1">Sign in to access the control panel</p>
+                </div>
+
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 tracking-wider block mb-1.5">USERNAME</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-user absolute left-4 top-4 text-slate-500"></i>
+                            <input id="login-username" type="text" placeholder="Enter admin username" 
+                                   class="w-full bg-slate-900 border border-slate-700 focus:border-cyan-500 rounded-2xl pl-11 pr-4 py-3.5 text-sm outline-none transition-colors">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 tracking-wider block mb-1.5">PASSWORD</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-4 top-4 text-slate-500"></i>
+                            <input id="login-password" type="password" placeholder="Enter password" 
+                                   class="w-full bg-slate-900 border border-slate-700 focus:border-cyan-500 rounded-2xl pl-11 pr-4 py-3.5 text-sm outline-none transition-colors">
+                            <button onclick="toggleLoginPassword()" class="absolute right-4 top-4 text-slate-500 hover:text-white">
+                                <i class="fa-solid fa-eye" id="login-eye-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 2 Hours Auto Login Checkbox -->
+                    <div class="flex items-center gap-3 py-1">
+                        <input type="checkbox" id="login-2h-check" class="login-checkbox">
+                        <label for="login-2h-check" class="text-xs font-bold text-slate-300 cursor-pointer select-none">Auto login next 2 hours</label>
+                    </div>
+
+                    <button onclick="performAdminLogin()" 
+                            class="w-full py-4 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 active:from-cyan-700 active:to-emerald-700 rounded-2xl font-extrabold text-lg shadow-lg shadow-cyan-600/30 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-sign-in-alt"></i>
+                        <span>LOGIN TO DASHBOARD</span>
+                    </button>
+                </div>
+            </div>
+            
+            <p class="text-center text-[10px] text-slate-500 mt-6">Secure access for authorized personnel only</p>
+        </div>
+    </div>
+
+    <!-- MOBILE OVERLAY -->
+    <div id="mobile-overlay" onclick="closeMobileSidebar()" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
+    
+    <!-- MAIN LAYOUT -->
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- SIDEBAR -->
+        <div id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col fixed lg:static inset-y-0 left-0 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-out mobile-drawer">
+            <div class="p-6 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 bg-gradient-to-br from-cyan-500 via-cyan-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                        <i class="fa-solid fa-shield-halved text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-black tracking-tighter">PRIME HORIZON</h1>
+                        <p class="text-[10px] text-emerald-400 font-semibold tracking-[2px]">ADMIN PANEL v2.0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NAVIGATION ITEMS -->
+            <div class="p-3 flex-1 overflow-y-auto text-sm custom-scroll">
+                <div onclick="showSection('dashboard'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer nav-active nav-item" id="nav-dashboard">
+                    <i class="fa-solid fa-chart-line w-5 text-cyan-400"></i>
+                    <span class="font-semibold">Dashboard</span>
+                </div>
+                
+                <div onclick="showSection('sessions'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-sessions">
+                    <i class="fa-solid fa-mobile-screen-button w-5 text-sky-400"></i>
+                    <span class="font-semibold">Session Phone</span>
+                    <span id="badge-sessions" class="ml-auto px-2.5 py-0.5 text-[10px] bg-sky-500 text-white font-extrabold rounded-full hidden">0</span>
+                </div>
+
+                <div onclick="showSection('users'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-users">
+                    <i class="fa-solid fa-users w-5 text-slate-400"></i>
+                    <span class="font-semibold">Users Directory</span>
+                </div>
+
+                <div onclick="showSection('active-verified'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-active-verified">
+                    <i class="fa-solid fa-user-shield w-5 text-emerald-400"></i>
+                    <span class="font-semibold">Verified & Active</span>
+                </div>
+                
+                <div onclick="showSection('kyc'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-kyc">
+                    <i class="fa-solid fa-id-card-clip w-5 text-amber-400"></i>
+                    <span class="font-semibold">KYC Approvals</span>
+                    <span id="badge-kyc" class="ml-auto px-2.5 py-0.5 text-[10px] bg-amber-500 text-black font-extrabold rounded-full hidden">0</span>
+                </div>
+                
+                <div onclick="showSection('doubleauth'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-doubleauth">
+                    <i class="fa-solid fa-camera-rotate w-5 text-indigo-400"></i>
+                    <span class="font-semibold">Double Verification</span>
+                    <span id="badge-doubleauth" class="ml-auto px-2.5 py-0.5 text-[10px] bg-indigo-500 text-white font-extrabold rounded-full hidden">0</span>
+                </div>
+
+                <div onclick="showSection('password'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-password">
+                    <i class="fa-solid fa-unlock-keyhole w-5 text-rose-400"></i>
+                    <span class="font-semibold">Password Recovery</span>
+                    <span id="badge-password" class="ml-auto px-2.5 py-0.5 text-[10px] bg-rose-500 text-white font-extrabold rounded-full hidden">0</span>
+                </div>
+
+                <div onclick="showSection('deposits'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-deposits">
+                    <i class="fa-solid fa-wallet w-5 text-emerald-400"></i>
+                    <span class="font-semibold">Deposits</span>
+                    <span id="badge-deposits" class="ml-auto px-2.5 py-0.5 text-[10px] bg-emerald-500 text-white font-extrabold rounded-full hidden">0</span>
+                </div>
+                <div onclick="showSection('withdrawals'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-withdrawals">
+                    <i class="fa-solid fa-hand-holding-dollar w-5 text-purple-400"></i>
+                    <span class="font-semibold">Withdrawals</span>
+                    <span id="badge-withdrawals" class="ml-auto px-2.5 py-0.5 text-[10px] bg-purple-500 text-white font-extrabold rounded-full hidden">0</span>
+                </div>
+                <div onclick="showSection('plans'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-plans">
+                    <i class="fa-solid fa-seedling w-5 text-emerald-400"></i>
+                    <span class="font-semibold">Investment Plans</span>
+                </div>
+                <div onclick="showSection('tasks'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-tasks">
+                    <i class="fa-solid fa-list-check w-5 text-purple-400"></i>
+                    <span class="font-semibold">Daily Tasks</span>
+                </div>
+                <div onclick="showSection('social'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-social">
+                    <i class="fa-solid fa-share-alt w-5 text-pink-400"></i>
+                    <span class="font-semibold">Social Channels</span>
+                </div>
+                <div onclick="showSection('support'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-support">
+                    <i class="fa-solid fa-headset w-5 text-indigo-400"></i>
+                    <span class="font-semibold">Support &amp; Chat</span>
+                    <span id="badge-support" class="ml-auto px-2.5 py-0.5 text-[10px] bg-indigo-500 text-white font-extrabold rounded-full hidden">0</span>
+                </div>
+                <div onclick="showSection('feedback'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-feedback">
+                    <i class="fa-solid fa-comments w-5 text-amber-400"></i>
+                    <span class="font-semibold">Feedbacks &amp; Appeals</span>
+                </div>
+                <div onclick="showSection('complaints'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-complaints">
+                    <i class="fa-solid fa-exclamation-triangle w-5 text-orange-400"></i>
+                    <span class="font-semibold">Complaints</span>
+                    <span id="badge-complaints" class="ml-auto px-2.5 py-0.5 text-[10px] bg-orange-500 text-white font-extrabold rounded-full hidden">0</span>
+                </div>
+
+                <div onclick="showSection('global-logs'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-global-logs">
+                    <i class="fa-solid fa-chart-pie w-5 text-fuchsia-400"></i>
+                    <span class="font-semibold">Global Logs</span>
+                </div>
+
+                <div onclick="showSection('history'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-history">
+                    <i class="fa-solid fa-clock-rotate-left w-5 text-teal-400"></i>
+                    <span class="font-semibold">User History</span>
+                </div>
+                <div onclick="showSection('settings'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-settings">
+                    <i class="fa-solid fa-cog w-5 text-slate-400"></i>
+                    <span class="font-semibold">System Settings</span>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-800 text-xs text-slate-500 flex items-center gap-2">
+                <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                <span class="font-medium">Super Admin • Live</span>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT AREA -->
+        <div class="flex-1 flex flex-col overflow-hidden w-full relative">
+            
+            <!-- TOP HEADER -->
+            <div class="bg-slate-900 border-b border-slate-800 px-5 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-40">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleMobileSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-2xl transition-colors">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <h2 id="section-title" class="text-2xl lg:text-3xl font-extrabold tracking-tight">Dashboard</h2>
+                </div>
+                
+                <!-- Global Blinking Alert for New Updates -->
+                <div id="global-new-alert" class="hidden absolute left-1/2 transform -translate-x-1/2 top-blink-alert px-4 py-1.5 rounded-full text-sm font-extrabold items-center gap-2 cursor-pointer shadow-lg z-50">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span><span id="global-new-qty">0</span> NEW ALERTS</span>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex items-center px-4 py-2 bg-slate-800 rounded-2xl text-sm border border-slate-700">
+                        <div class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse mr-2"></div>
+                        <span class="font-medium">Live • <span id="live-users-count" class="font-bold text-cyan-400">0</span> Users</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-slate-800 rounded-2xl px-1 py-1 border border-slate-700">
+                        <button onclick="logoutAdmin()" class="px-4 lg:px-5 py-2 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white transition-all text-sm rounded-xl flex items-center gap-2 font-bold">
+                            <i class="fa-solid fa-sign-out-alt"></i>
+                            <span class="hidden sm:inline">Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCROLLABLE SECTIONS -->
+            <div class="flex-1 overflow-auto p-5 lg:p-8 bg-slate-950 custom-scroll">
+                
+                <!-- 1. DASHBOARD -->
+                <div id="section-dashboard" class="section active">
+                    
+                    <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl mb-6 flex items-center px-4 py-2.5 shadow-lg relative overflow-hidden">
+                        <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-slate-800 via-slate-800 to-transparent w-16 z-10 flex items-center px-4">
+                            <i class="fa-solid fa-bell text-amber-400 animate-bounce"></i>
+                        </div>
+                        <div class="slim-notification-bar flex-1 h-5 ml-10">
+                            <div id="slim-ticker-content" class="slim-notification-content text-[13px] text-slate-300 font-semibold tracking-wide flex gap-8">
+                                <span>Scanning live ecosystem metrics...</span>
+                            </div>
+                        </div>
+                        <div class="absolute inset-y-0 right-0 bg-gradient-to-l from-slate-800 via-slate-800 to-transparent w-12 z-10"></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
+                        <div class="glass p-6 rounded-3xl stat-card border border-cyan-500/30">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-xs lg:text-sm font-bold tracking-wider">TOTAL USERS</p>
+                                    <p id="dash-total-users" class="text-4xl lg:text-5xl font-black mt-3 text-cyan-400 metric-value">0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-cyan-500/10 rounded-2xl flex items-center justify-center">
+                                    <i class="fa-solid fa-users text-3xl text-cyan-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass p-6 rounded-3xl stat-card border border-emerald-500/30">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-xs lg:text-sm font-bold tracking-wider">TOTAL BALANCE</p>
+                                    <p id="dash-total-balance" class="text-4xl lg:text-5xl font-black mt-3 text-emerald-400 metric-value">Rs. 0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
+                                    <i class="fa-solid fa-wallet text-3xl text-emerald-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass p-6 rounded-3xl stat-card border border-slate-700/50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-xs lg:text-sm font-medium tracking-wider">PENDING DEPOSITS</p>
+                                    <p id="dash-pending-deposit" class="text-4xl lg:text-5xl font-black mt-3 text-emerald-400 metric-value">0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
+                                    <i class="fa-solid fa-upload text-3xl text-emerald-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass p-6 rounded-3xl stat-card border border-slate-700/50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-xs lg:text-sm font-medium tracking-wider">PENDING WITHDRAWALS</p>
+                                    <p id="dash-pending-withdraw" class="text-4xl lg:text-5xl font-black mt-3 text-purple-400 metric-value">0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center">
+                                    <i class="fa-solid fa-clock text-3xl text-purple-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-5 mb-8">
+                        <div class="glass p-5 rounded-3xl stat-card border border-slate-700/50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-[10px] font-bold tracking-wider">TOTAL DEPOSITS</p>
+                                    <p id="dash-total-deposits" class="text-2xl font-black mt-2 text-emerald-400 metric-value">Rs. 0</p>
+                                </div>
+                                <i class="fa-solid fa-arrow-down text-xl text-emerald-400"></i>
+                            </div>
+                        </div>
+                        <div class="glass p-5 rounded-3xl stat-card border border-slate-700/50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-[10px] font-bold tracking-wider">TOTAL WITHDRAWALS</p>
+                                    <p id="dash-total-withdrawals" class="text-2xl font-black mt-2 text-purple-400 metric-value">Rs. 0</p>
+                                </div>
+                                <i class="fa-solid fa-arrow-up text-xl text-purple-400"></i>
+                            </div>
+                        </div>
+                        <div class="glass p-5 rounded-3xl stat-card border border-slate-700/50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-[10px] font-bold tracking-wider">TOTAL COMPLAINTS</p>
+                                    <p id="dash-total-complaints" class="text-2xl font-black mt-2 text-orange-400 metric-value">0</p>
+                                </div>
+                                <i class="fa-solid fa-exclamation-triangle text-xl text-orange-400"></i>
+                            </div>
+                        </div>
+                        <div class="glass p-5 rounded-3xl stat-card border border-slate-700/50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-[10px] font-bold tracking-wider">TOTAL FEEDBACKS</p>
+                                    <p id="dash-total-feedbacks" class="text-2xl font-black mt-2 text-amber-400 metric-value">0</p>
+                                </div>
+                                <i class="fa-solid fa-comments text-xl text-amber-400"></i>
+                            </div>
+                        </div>
+                        <div class="glass p-5 rounded-3xl stat-card border border-slate-700/50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-[10px] font-bold tracking-wider">TOTAL APPEALS</p>
+                                    <p id="dash-total-appeals" class="text-2xl font-black mt-2 text-red-400 metric-value">0</p>
+                                </div>
+                                <i class="fa-solid fa-gavel text-xl text-red-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass p-7 rounded-3xl border border-slate-700/50">
+                        <h3 class="font-extrabold mb-6 flex items-center gap-3 text-lg">
+                            <i class="fa-solid fa-bolt text-cyan-400"></i> 
+                            <span>Quick Actions</span>
+                        </h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <button onclick="showSection('kyc')" class="p-5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-2xl text-left transition-all group border border-slate-700/60 modern-btn">
+                                <i class="fa-solid fa-id-card-clip text-2xl mb-4 block text-amber-400 group-hover:scale-110 transition-transform"></i>
+                                <span class="font-bold text-sm">Review KYC</span>
+                            </button>
+                            <button onclick="showSection('doubleauth')" class="p-5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-2xl text-left transition-all group border border-slate-700/60 modern-btn">
+                                <i class="fa-solid fa-camera-rotate text-2xl mb-4 block text-indigo-400 group-hover:scale-110 transition-transform"></i>
+                                <span class="font-bold text-sm">Double Verif.</span>
+                            </button>
+                            <button onclick="showSection('deposits')" class="p-5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-2xl text-left transition-all group border border-slate-700/60 modern-btn">
+                                <i class="fa-solid fa-wallet text-2xl mb-4 block text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                                <span class="font-bold text-sm">Approve Deposits</span>
+                            </button>
+                            <button onclick="showSection('withdrawals')" class="p-5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-2xl text-left transition-all group border border-slate-700/60 modern-btn">
+                                <i class="fa-solid fa-hand-holding-dollar text-2xl mb-4 block text-purple-400 group-hover:scale-110 transition-transform"></i>
+                                <span class="font-bold text-sm">Withdrawals</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1.5. SESSION PHONE -->
+                <div id="section-sessions" class="section">
+                    <div class="mb-6">
+                        <h3 class="section-header">Admin Sessions & Credentials</h3>
+                        <p class="text-slate-400 text-sm mt-1">Manage admin login details and multi-device sessions</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Change Username/Password -->
+                        <div class="glass p-6 rounded-3xl border border-slate-700/50">
+                            <h4 class="font-extrabold mb-5 flex items-center gap-2 text-sky-400">
+                                <i class="fa-solid fa-user-lock"></i>
+                                Update Credentials
+                            </h4>
+                            
+                            <div class="space-y-4 mb-6">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-400 tracking-wider">OLD USERNAME (CURRENT)</label>
+                                    <input id="session-old-username" type="text" readonly class="mt-1.5 w-full px-5 py-3 bg-slate-900 border border-slate-700 text-slate-500 rounded-2xl text-sm outline-none cursor-not-allowed">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-400 tracking-wider">OLD PASSWORD (CURRENT)</label>
+                                    <div class="relative mt-1.5">
+                                        <input id="session-old-password" type="text" readonly class="w-full px-5 py-3 bg-slate-900 border border-slate-700 text-slate-500 rounded-2xl text-sm outline-none cursor-not-allowed pr-10">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr class="border-slate-700 my-6">
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-300 tracking-wider">NEW USERNAME</label>
+                                    <input id="session-new-username" type="text" placeholder="Enter new username" class="mt-1.5 w-full px-5 py-3 bg-slate-800 border border-slate-600 focus:border-sky-500 rounded-2xl text-sm outline-none transition-colors">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-300 tracking-wider">NEW PASSWORD</label>
+                                    <input id="session-new-password" type="password" placeholder="Enter new password" class="mt-1.5 w-full px-5 py-3 bg-slate-800 border border-slate-600 focus:border-sky-500 rounded-2xl text-sm outline-none transition-colors">
+                                </div>
+                            </div>
+
+                            <button onclick="updateAdminCredentials()" class="w-full mt-6 py-3.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 rounded-2xl font-extrabold text-sm transition-all shadow-lg shadow-sky-600/30">
+                                Save New Credentials
+                            </button>
+                        </div>
+
+                        <!-- Active Devices List -->
+                        <div class="glass p-6 rounded-3xl border border-slate-700/50 flex flex-col">
+                            <div class="flex justify-between items-center mb-5">
+                                <h4 class="font-extrabold flex items-center gap-2 text-emerald-400">
+                                    <i class="fa-solid fa-server"></i>
+                                    Active Login Places
+                                </h4>
+                                <span class="text-xs px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full font-bold">Total: <span id="session-total-count">1</span></span>
+                            </div>
+
+                            <p class="text-xs text-slate-400 mb-4">View and manage other devices where the admin account is currently logged in.</p>
+
+                            <div id="session-devices-list" class="flex-1 space-y-3 overflow-y-auto max-h-[350px] custom-scroll pr-2">
+                                <!-- Devices will be populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. USERS DIRECTORY -->
+                <div id="section-users" class="section">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                        <div>
+                            <h3 class="section-header">Users Directory</h3>
+                            <p class="text-slate-400 text-sm mt-1">Full control over all user accounts</p>
+                        </div>
+                        <button onclick="showAddUserModal()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-2xl text-sm font-extrabold flex items-center gap-2 shadow-lg shadow-emerald-600/30 modern-btn w-full sm:w-auto justify-center">
+                            <i class="fa-solid fa-user-plus"></i> 
+                            <span>Add New User</span>
+                        </button>
+                    </div>
+
+                    <div class="glass p-3 rounded-2xl mb-6 border border-slate-700/50 flex gap-3">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-500"></i>
+                            <input type="text" id="users-search-input" placeholder="Search by Phone, Name, or Email..." 
+                                   class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-11 pr-4 py-3 text-sm focus:border-cyan-500 outline-none"
+                                   onkeyup="filterUsersDirectory()">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4" id="users-directory-feed"></div>
+                </div>
+
+                <!-- 3. VERIFIED & ACTIVE PLANS -->
+                <div id="section-active-verified" class="section">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="section-header">Verified & Active Nodes</h3>
+                            <p class="text-slate-400 text-sm">Manage users with Double Verification and Active Plans.</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4" id="active-verified-feed"></div>
+                </div>
+
+                <!-- 4. KYC APPROVALS -->
+                <div id="section-kyc" class="section">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="section-header">KYC Approvals</h3>
+                            <p class="text-slate-400 text-sm">Verify user identity documents and details</p>
+                        </div>
+                    </div>
+                    <div id="kyc-requests-feed" class="space-y-4"></div>
+                </div>
+
+                <!-- 5. DOUBLE VERIFICATION -->
+                <div id="section-doubleauth" class="section">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="section-header">Double Verification Requests</h3>
+                            <p class="text-slate-400 text-sm">Verify live captures against baseline photos</p>
+                        </div>
+                    </div>
+                    <div id="doubleauth-requests-feed" class="space-y-4"></div>
+                </div>
+
+                <!-- 6. PASSWORD RECOVERY -->
+                <div id="section-password" class="section">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="section-header">Password Recovery Requests</h3>
+                            <p class="text-slate-400 text-sm">Process forgot password requests via WhatsApp</p>
+                        </div>
+                    </div>
+                    <div id="password-requests-feed" class="space-y-4"></div>
+                </div>
+
+                <!-- 7. DEPOSITS -->
+                <div id="section-deposits" class="section">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="section-header">Pending Deposits</h3>
+                            <p class="text-slate-400 text-sm">Review and approve incoming deposits</p>
+                        </div>
+                    </div>
+                    <div id="deposit-requests-feed" class="space-y-4"></div>
+                </div>
+
+                <!-- 8. WITHDRAWALS -->
+                <div id="section-withdrawals" class="section">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="section-header">Pending Withdrawals</h3>
+                            <p class="text-slate-400 text-sm">Process user withdrawal requests</p>
+                        </div>
+                    </div>
+                    <div id="withdrawal-requests-feed" class="space-y-4"></div>
+                </div>
+
+                <!-- 9. PLANS -->
+                <div id="section-plans" class="section">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <h3 class="section-header">Investment Plans</h3>
+                            <p class="text-slate-400 text-sm">Manage available investment packages</p>
+                        </div>
+                        <button onclick="showAddPlanModal()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-2xl text-sm font-extrabold flex items-center gap-2 shadow-lg shadow-emerald-600/30 modern-btn w-full sm:w-auto justify-center">
+                            <i class="fa-solid fa-plus"></i> Add Plan
+                        </button>
+                    </div>
+                    <div class="glass rounded-3xl p-2 border border-slate-700/50" id="plans-list"></div>
+                </div>
+
+                <!-- 10. TASKS -->
+                <div id="section-tasks" class="section">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <h3 class="section-header">Daily Tasks (Coin Rewards)</h3>
+                            <p class="text-slate-400 text-sm">Create and manage daily earning tasks</p>
+                        </div>
+                        <button onclick="showAddTaskModal()" class="px-6 py-3 bg-purple-600 hover:bg-purple-500 active:bg-purple-700 rounded-2xl text-sm font-extrabold flex items-center gap-2 shadow-lg shadow-purple-600/30 modern-btn w-full sm:w-auto justify-center">
+                            <i class="fa-solid fa-plus"></i> Add Task
+                        </button>
+                    </div>
+                    <div class="glass rounded-3xl p-2 border border-slate-700/50" id="tasks-list"></div>
+                </div>
+
+                <!-- 11. SOCIAL CHANNELS -->
+                <div id="section-social" class="section">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <h3 class="section-header">Social Channels</h3>
+                            <p class="text-slate-400 text-sm">Manage community &amp; social links</p>
+                        </div>
+                        <button onclick="showAddSocialModal()" class="px-6 py-3 bg-pink-600 hover:bg-pink-500 active:bg-pink-700 rounded-2xl text-sm font-extrabold flex items-center gap-2 shadow-lg shadow-pink-600/30 modern-btn w-full sm:w-auto justify-center">
+                            <i class="fa-solid fa-plus"></i> Add Channel
+                        </button>
+                    </div>
+                    <div class="glass rounded-3xl p-2 border border-slate-700/50" id="social-list"></div>
+                </div>
+
+                <!-- 12. SUPPORT & CHAT -->
+                <div id="section-support" class="section">
+                    <h3 class="section-header mb-6">Support &amp; Live Chat Hub</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div class="lg:col-span-4 glass rounded-3xl p-4 border border-slate-700/50">
+                            <div class="flex items-center justify-between mb-4 px-1">
+                                <h4 class="font-extrabold text-sm tracking-wider">ACTIVE CHANNELS</h4>
+                                <span id="support-channel-count" class="text-xs px-3 py-1 bg-slate-800 rounded-full font-mono">0</span>
+                            </div>
+                            <div id="support-active-channels-list" class="space-y-1.5 max-h-[420px] overflow-auto pr-1 custom-scroll"></div>
+                        </div>
+                        <div class="lg:col-span-8 glass rounded-3xl flex flex-col h-[520px] border border-slate-700/50 overflow-hidden">
+                            <div class="p-4 border-b border-slate-700 flex items-center gap-3 bg-slate-900/50">
+                                <img id="chat-header-avatar" src="https://i.pravatar.cc/36" class="w-9 h-9 rounded-2xl object-cover border border-slate-600 hidden">
+                                <div class="flex-1 min-w-0">
+                                    <div id="chat-header-user-title" class="font-extrabold truncate">Select a user to chat</div>
+                                    <div id="chat-header-user-phone" class="text-xs text-slate-400 font-mono truncate"></div>
+                                </div>
+                                <button id="clear-all-chat-btn" onclick="clearAllUserChat()" class="ml-auto px-4 py-2 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg text-xs font-bold transition-colors hidden">
+                                    <i class="fa-solid fa-trash mr-1"></i> Clear Entire Chat
+                                </button>
+                                <div id="chat-status-dot" class="w-3 h-3 bg-emerald-400 rounded-full hidden ml-2"></div>
+                            </div>
+                            <div id="admin-chat-messages-viewport" class="flex-1 p-4 overflow-auto space-y-4 bg-slate-900 custom-scroll"></div>
+                            <div class="p-4 border-t border-slate-700 flex gap-2 bg-slate-900/70">
+                                <input type="file" id="admin-chat-image-file-input" accept="image/*" class="hidden" onchange="handleAdminChatImageFileSelectionEvent(event)">
+                                <button onclick="document.getElementById('admin-chat-image-file-input').click()" class="w-12 h-11 flex-shrink-0 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-2xl transition-colors border border-slate-700">
+                                    <i class="fa-solid fa-paperclip text-lg"></i>
+                                </button>
+                                <input id="admin-chat-message-field" type="text" placeholder="Type your message..." class="flex-1 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-2xl px-5 text-sm outline-none transition-colors" onkeypress="if (event.key === 'Enter') transmitAdminLiveChatMessage()">
+                                <button onclick="transmitAdminLiveChatMessage()" class="px-7 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 rounded-2xl font-extrabold text-sm transition-all">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 13. FEEDBACK & APPEALS -->
+                <div id="section-feedback" class="section">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="section-header mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-comments text-amber-400"></i>
+                                <span>User Feedbacks</span>
+                            </h3>
+                            <div class="glass rounded-3xl p-4 max-h-[520px] overflow-auto border border-slate-700/50 custom-scroll" id="feedback-list"></div>
+                        </div>
+                        <div>
+                            <h3 class="section-header mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-gavel text-purple-400"></i>
+                                <span>Suspension Appeals</span>
+                            </h3>
+                            <div class="glass rounded-3xl p-4 max-h-[520px] overflow-auto border border-slate-700/50 custom-scroll" id="appeals-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 14. COMPLAINTS -->
+                <div id="section-complaints" class="section">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="section-header">User Complaints</h3>
+                            <p class="text-slate-400 text-sm">Review, reply, resolve or delete user complaints</p>
+                        </div>
+                    </div>
+                    <div id="complaints-feed" class="space-y-4"></div>
+                </div>
+
+                <!-- 15. GLOBAL LOGS -->
+                <div id="section-global-logs" class="section">
+                    <div class="mb-6">
+                        <h3 class="section-header">Global System Logs</h3>
+                        <p class="text-slate-400 text-sm mt-1">Filter overall platform statistics by date range</p>
+                    </div>
+
+                    <div class="glass p-5 rounded-3xl border border-slate-700/50 mb-6 flex flex-wrap gap-4 items-end">
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="text-xs font-bold text-slate-400 mb-2 block">FROM DATE</label>
+                            <input type="date" id="log-date-from" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-fuchsia-500 outline-none">
+                        </div>
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="text-xs font-bold text-slate-400 mb-2 block">TO DATE</label>
+                            <input type="date" id="log-date-to" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-fuchsia-500 outline-none">
+                        </div>
+                        <button onclick="generateGlobalLogs()" class="px-8 py-3 bg-fuchsia-600 hover:bg-fuchsia-500 rounded-xl font-bold text-sm shadow-lg shadow-fuchsia-600/30 transition-colors h-[46px]">Generate Report</button>
+                    </div>
+
+                    <div id="global-logs-results" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- 16. USER HISTORY -->
+                <div id="section-history" class="section">
+                    <div class="mb-6">
+                        <h3 class="section-header">User Activity History</h3>
+                        <p class="text-slate-400 text-sm mt-1">Search by phone number, Gmail, Deposit ID or Withdraw ID to view a user's complete activity</p>
+                    </div>
+                    <div class="glass rounded-3xl p-5 border border-slate-700/50 mb-6">
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-slate-500"></i>
+                                <input id="history-search-input" type="text" placeholder="Enter phone number, Gmail, Deposit ID or Withdraw ID..." class="w-full bg-slate-800 border border-slate-700 focus:border-teal-500 rounded-2xl pl-11 pr-4 py-3.5 text-sm outline-none transition-colors" onkeypress="if (event.key === 'Enter') performHistorySearch()">
+                            </div>
+                            <button onclick="performHistorySearch()" class="px-8 py-3.5 bg-teal-600 hover:bg-teal-500 active:bg-teal-700 rounded-2xl text-sm font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-teal-600/30 modern-btn whitespace-nowrap">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <span>Search</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="history-results-container"></div>
+                </div>
+
+                <!-- 17. SYSTEM SETTINGS -->
+                <div id="section-settings" class="section">
+                    <h3 class="section-header mb-6">System Settings</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <!-- Deposit Gateways & Binance -->
+                        <div class="glass p-6 rounded-3xl border border-slate-700/50 md:col-span-2">
+                            <h4 class="font-extrabold mb-5 flex items-center gap-2">
+                                <i class="fa-solid fa-building-columns text-emerald-400"></i>
+                                Deposit Accounts & Network
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">JAZZCASH TITLE</label>
+                                    <input id="dep-jazz-title" placeholder="e.g. Muhammad Naeem" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-2xl mb-3 text-sm outline-none">
+                                    
+                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">JAZZCASH NUMBER</label>
+                                    <input id="dep-jazz-acc" placeholder="e.g. 03257436319" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-2xl mb-3 text-sm outline-none font-mono">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">EASYPAISA TITLE</label>
+                                    <input id="dep-easy-title" placeholder="e.g. Muhammad Naeem" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-2xl mb-3 text-sm outline-none">
+                                    
+                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">EASYPAISA NUMBER</label>
+                                    <input id="dep-easy-acc" placeholder="e.g. 03257436319" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-2xl mb-3 text-sm outline-none font-mono">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">BANK TITLE</label>
+                                    <input id="dep-bank-title" placeholder="e.g. Prime Horizon Corp Bank Node" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-2xl mb-3 text-sm outline-none">
+                                    
+                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">BANK IBAN / NUMBER</label>
+                                    <input id="dep-bank-acc" placeholder="e.g. IBAN-PK73MAIN00003257436319" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-2xl mb-3 text-sm outline-none font-mono">
+                                </div>
+                            </div>
+                            
+                            <!-- Binance Setup -->
+                            <div class="md:col-span-2 pt-4 border-t border-slate-700/50 mt-2">
+                                <h5 class="font-bold text-amber-400 mb-3 flex items-center gap-2"><i class="fa-brands fa-btc"></i> Binance Configuration (Crypto)</h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">BINANCE NICKNAME</label>
+                                        <input id="dep-binance-name" placeholder="e.g. PrimeCrypto" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-amber-500 rounded-2xl mb-3 text-sm outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">BINANCE UID</label>
+                                        <input id="dep-binance-uid" placeholder="e.g. 12345678" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-amber-500 rounded-2xl mb-3 text-sm outline-none font-mono">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onclick="saveDepositGateways()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-2xl text-sm font-extrabold mt-2 transition-all">Save All Account Settings</button>
+                        </div>
+                        
+                        <!-- Maintenance -->
+                        <div class="glass p-6 rounded-3xl border border-slate-700/50">
+                            <h4 class="font-extrabold mb-5 flex items-center gap-3 text-base">
+                                <i class="fa-solid fa-tools text-orange-400"></i> 
+                                Maintenance Mode
+                            </h4>
+                            <div class="flex gap-3">
+                                <button onclick="toggleMaintenance(true)" class="flex-1 py-3 bg-red-600 hover:bg-red-500 active:bg-red-700 rounded-2xl text-sm font-extrabold transition-all">Enable</button>
+                                <button onclick="toggleMaintenance(false)" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-2xl text-sm font-extrabold transition-all">Disable</button>
+                            </div>
+                            <input id="maintenance-note" placeholder="Maintenance message for users..." class="mt-4 w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-orange-500 rounded-2xl text-sm outline-none transition-colors">
+                            <button onclick="updateMaintenanceNote()" class="mt-3 w-full py-3 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 rounded-2xl text-sm font-bold transition-all">Update Note</button>
+                        </div>
+                        
+                        <!-- Limits & Rates -->
+                        <div class="glass p-6 rounded-3xl border border-slate-700/50">
+                            <h4 class="font-extrabold mb-5 flex items-center gap-2">
+                                <i class="fa-solid fa-scale-balanced text-cyan-400"></i>
+                                Limits &amp; Rates
+                            </h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-400 tracking-wider">DOLLAR RATE (PKR)</label>
+                                    <input type="number" id="dollar-rate" step="0.01" class="mt-1.5 w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-2xl text-sm outline-none transition-colors" placeholder="e.g. 278.50">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-400 tracking-wider">MINIMUM WITHDRAWAL (Rs)</label>
+                                    <input type="number" id="min-withdraw" class="mt-1.5 w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-2xl text-sm outline-none transition-colors">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-400 tracking-wider">COINS PER RUPEE</label>
+                                    <input type="number" id="coins-per-rupee" step="0.1" class="mt-1.5 w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-2xl text-sm outline-none transition-colors">
+                                </div>
+                                <button onclick="saveLimits()" class="w-full py-3.5 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 rounded-2xl font-extrabold text-sm mt-2 transition-all">Save Limits & Rates</button>
+                            </div>
+                        </div>
+
+                        <!-- NEW: Dynamic Multiple Features Video Setup -->
+                        <div class="glass p-6 rounded-3xl md:col-span-2 border border-slate-700/50">
+                            <div class="flex justify-between items-center mb-5">
+                                <h4 class="font-extrabold flex items-center gap-2 text-red-400">
+                                    <i class="fa-brands fa-youtube"></i>
+                                    Features Videos Setup (Multiple)
+                                </h4>
+                                <button onclick="addNewVideoField()" class="px-4 py-2 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-xl text-xs font-bold transition-colors border border-red-500/30">
+                                    <i class="fa-solid fa-plus mr-1"></i> Add Another Video
+                                </button>
+                            </div>
+                            
+                            <p class="text-xs text-slate-400 mb-4">Add multiple tutorial or feature videos. Users will see them as tabs.</p>
+
+                            <!-- Dynamic Container where all videos will be listed -->
+                            <div id="dynamic-videos-container" class="space-y-4 mb-6">
+                                <!-- Fields will be injected here via JS -->
+                            </div>
+
+                            <!-- Preview Area -->
+                            <div class="flex flex-col mt-6 border-t border-slate-700/50 pt-6">
+                                <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">PREVIEW (LATEST VIDEO)</label>
+                                <div id="video-preview-container" class="w-full max-w-md mx-auto aspect-video flex items-center justify-center bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden relative">
+                                    <span class="text-slate-500 text-xs relative z-10">Video preview will appear here</span>
+                                </div>
+                            </div>
+
+                            <button onclick="saveAllFeaturesVideos()" class="w-full mt-6 py-3.5 bg-red-600 hover:bg-red-500 active:bg-red-700 rounded-2xl font-extrabold text-sm transition-all shadow-lg shadow-red-600/30">
+                                Save All Videos
+                            </button>
+                        </div>
+                        
+                        <!-- Popup Announcement -->
+                        <div class="glass p-6 rounded-3xl md:col-span-2 border border-slate-700/50">
+                            <h4 class="font-extrabold mb-5 flex items-center gap-2">
+                                <i class="fa-solid fa-bullhorn text-pink-400"></i>
+                                Popup Announcement
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <input id="popup-title" placeholder="Announcement Title" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-pink-500 rounded-2xl mb-3 text-sm outline-none transition-colors">
+                                    <textarea id="popup-desc" placeholder="Announcement description..." rows="3" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-pink-500 rounded-2xl text-sm outline-none transition-colors"></textarea>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5">ANNOUNCEMENT IMAGE</label>
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div id="popup-image-preview" class="w-14 h-14 bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden flex-shrink-0 hidden">
+                                            <img id="popup-image-preview-img" class="w-full h-full object-cover">
+                                        </div>
+                                        <div class="flex-1">
+                                            <input type="file" id="popup-image-file" accept="image/*" class="hidden" onchange="uploadPopupImage(event)">
+                                            <button onclick="document.getElementById('popup-image-file').click()" class="w-full px-4 py-3 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                                                <i class="fa-solid fa-upload"></i>
+                                                <span>Upload Image</span>
+                                            </button>
+                                            <div id="popup-image-url-display" class="text-[10px] text-emerald-400 mt-1.5 font-mono break-all hidden"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-3 mt-auto">
+                                        <button onclick="savePopupAnnouncement(true)" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-2xl text-sm font-extrabold transition-all">Activate</button>
+                                        <button onclick="savePopupAnnouncement(false)" class="flex-1 py-3 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 rounded-2xl text-sm font-extrabold transition-all">Deactivate</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- About Us -->
+                        <div class="glass p-6 rounded-3xl md:col-span-2 border border-slate-700/50">
+                            <h4 class="font-extrabold mb-5 flex items-center gap-2">
+                                <i class="fa-solid fa-info-circle text-sky-400"></i>
+                                About Us (Shows in User App)
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <textarea id="about-us-text" placeholder="Write about Prime Horizon..." rows="4" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-sky-500 rounded-2xl text-sm outline-none transition-colors"></textarea>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5">ABOUT US IMAGE</label>
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div id="about-image-preview" class="w-14 h-14 bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden flex-shrink-0 hidden">
+                                            <img id="about-image-preview-img" class="w-full h-full object-cover">
+                                        </div>
+                                        <div class="flex-1">
+                                            <input type="file" id="about-image-file" accept="image/*" class="hidden" onchange="uploadAboutImage(event)">
+                                            <button onclick="document.getElementById('about-image-file').click()" class="w-full px-4 py-3 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                                                <i class="fa-solid fa-upload"></i>
+                                                <span>Upload Image</span>
+                                            </button>
+                                            <div id="about-image-url-display" class="text-[10px] text-emerald-400 mt-1.5 font-mono break-all hidden"></div>
+                                        </div>
+                                    </div>
+                                    <button onclick="saveAboutUs()" class="mt-auto py-3 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 rounded-2xl text-sm font-extrabold transition-all">Save About Us</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[999] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- System Lock Screen (Admin 2 Billing) -->
+    <div id="system-lock-screen" class="hidden fixed inset-0 bg-slate-950 z-[999] overflow-y-auto">
+        <div class="min-h-full flex items-center justify-center p-4">
+            <div class="max-w-lg w-full">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-red-500/10 rounded-3xl mb-4">
+                        <i class="fa-solid fa-lock text-red-400 text-4xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-extrabold text-white">System automatic Currently OFF</h2>
+                    <p class="text-red-400 mt-1">محترم ناظم، آپ کا پلان سالانہ ہے اس لیے بل ادا کریں۔ براہِ کرم ابھی بل ادا کریں تاکہ سسٹم بحال ہو جائے۔</p>
+                </div>
+
+                <div class="glass rounded-3xl p-7 border border-red-500/20">
+                    <div class="text-center mb-6">
+                        <div class="text-sm text-red-300">CURRENT BILL</div>
+                        <div id="system-lock-bill-amount" class="text-6xl font-black text-white mt-1">Rs. 10,000</div>
+                    </div>
+
+                    <div class="bg-slate-900 rounded-2xl p-5 mb-6 border border-slate-700">
+                        <div class="flex items-center gap-3 mb-4">
+                            <i class="fa-solid fa-university text-emerald-400 text-2xl"></i>
+                            <div>
+                                <div class="font-extrabold text-lg">Meezan Bank</div>
+                                <div class="text-xs text-emerald-400">Official Payment Account</div>
+                            </div>
+                        </div>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Account Number</span>
+                                <span class="font-mono font-bold">00300111855522</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Account Title</span>
+                                <span class="font-bold">Muhammad Naeem</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-6">
+                        <p class="text-sm text-slate-300 leading-relaxed">
+                            براہِ کرم رقم ادا کرنے کے بعد ٹرانزیکشن آئی ڈی درج کریں اور رسید کا سکرین شاٹ لگائیں۔
+                        </p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 tracking-wider">TRX ID / Reference</label>
+                            <input id="system-trx-id" type="text" placeholder="Enter TRX ID" class="mt-1.5 w-full px-5 py-3.5 bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-2xl text-lg outline-none">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 tracking-wider">SCREENSHOT (Proof)</label>
+                            <input type="file" id="system-screenshot" accept="image/*" class="hidden" onchange="handleSystemScreenshot(event)">
+                            <button onclick="document.getElementById('system-screenshot').click()" class="mt-1.5 w-full px-5 py-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-2xl text-sm font-bold flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-upload"></i>
+                                <span>Upload Screenshot</span>
+                            </button>
+                            <div id="system-screenshot-preview" class="mt-3 hidden">
+                                <img id="system-screenshot-img" class="max-h-28 rounded-2xl border border-slate-700 mx-auto">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <button onclick="submitSystemBillPayment()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-extrabold text-lg">SUBMIT PAYMENT</button>
+                    </div>
+                    <p class="text-center text-xs text-slate-500 mt-4">Developer Payment</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Custom JS File -->
+    <script src="index.js"></script>
+</body>
+</html>
