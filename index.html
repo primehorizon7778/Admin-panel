@@ -1,952 +1,1881 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prime Horizon • Admin Panel v4.0</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- HTML2PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Custom CSS File -->
-    <link rel="stylesheet" href="index.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prime Horizon · Admin Panel v6.1</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+body{font-family:Inter,system-ui,sans-serif;background:#020617;color:#e2e8f0}
+.glass{background:rgba(15,23,42,.92);backdrop-filter:blur(20px);border:1px solid rgba(148,163,184,.12)}
+.section{display:none}.section.active{display:block;animation:fadeInUp .35s ease}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.nav-active{background:#1e2937;border-left:4px solid #06b6d4;color:#fff;font-weight:700}
+.modern-btn{transition:.2s}.modern-btn:hover{transform:translateY(-2px)}
+.custom-scroll::-webkit-scrollbar{width:6px}.custom-scroll::-webkit-scrollbar-thumb{background:#475569;border-radius:20px}
+.badge{min-width:1.25rem;height:1.25rem;padding:0 .4rem;border-radius:999px;font-size:10px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.login-checkbox{appearance:none;width:1.1em;height:1.1em;border:2px solid #475569;border-radius:.25em;display:grid;place-content:center;cursor:pointer;background:#0f172a}
+.login-checkbox:checked{background:#06b6d4;border-color:#06b6d4}
+.login-checkbox:checked::before{content:"";width:.55em;height:.55em;clip-path:polygon(14% 44%,0 65%,50% 100%,100% 16%,80% 0,43% 62%);background:#fff}
+input,select,textarea{color-scheme:dark}
+.binance-badge{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3);padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700}
+</style>
 </head>
 <body class="bg-slate-950 text-slate-200">
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen" class="fixed inset-0 z-[999] flex items-center justify-center login-container">
-        <div class="w-full max-w-md mx-4">
-            <div class="flex justify-center mb-8">
-                <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 bg-gradient-to-br from-cyan-500 via-cyan-400 to-emerald-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-cyan-500/40">
-                        <i class="fa-solid fa-shield-halved text-white text-4xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-4xl font-black tracking-tighter">PRIME HORIZON</h1>
-                        <p class="text-emerald-400 text-sm font-bold tracking-[3px]">ADMIN PANEL v4.1</p>
-                    </div>
-                </div>
-            </div>
 
-            <div class="glass rounded-3xl p-8 border border-slate-700/60 shadow-2xl">
-                <div class="text-center mb-8">
-                    <h2 class="text-2xl font-extrabold">Admin Login</h2>
-                    <p class="text-slate-400 text-sm mt-1">Sign in to access the control panel</p>
-                </div>
-
-                <div class="space-y-5">
-                    <div>
-                        <label class="text-xs font-bold text-slate-400 tracking-wider block mb-1.5">USERNAME</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-user absolute left-4 top-4 text-slate-500"></i>
-                            <input id="login-username" type="text" placeholder="Enter admin username" 
-                                   class="w-full bg-slate-900 border border-slate-700 focus:border-cyan-500 rounded-2xl pl-11 pr-4 py-3.5 text-sm outline-none transition-colors">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="text-xs font-bold text-slate-400 tracking-wider block mb-1.5">PASSWORD</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-lock absolute left-4 top-4 text-slate-500"></i>
-                            <input id="login-password" type="password" placeholder="Enter password" 
-                                   class="w-full bg-slate-900 border border-slate-700 focus:border-cyan-500 rounded-2xl pl-11 pr-4 py-3.5 text-sm outline-none transition-colors">
-                            <button onclick="toggleLoginPassword()" class="absolute right-4 top-4 text-slate-500 hover:text-white">
-                                <i class="fa-solid fa-eye" id="login-eye-icon"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 2 Hours Auto Login Checkbox -->
-                    <div class="flex items-center gap-3 py-1">
-                        <input type="checkbox" id="login-2h-check" class="login-checkbox">
-                        <label for="login-2h-check" class="text-xs font-bold text-slate-300 cursor-pointer select-none">Auto login next 2 hours</label>
-                    </div>
-
-                    <button onclick="performAdminLogin()" 
-                            class="w-full py-4 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 active:from-cyan-700 active:to-emerald-700 rounded-2xl font-extrabold text-lg shadow-lg shadow-cyan-600/30 transition-all flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-sign-in-alt"></i>
-                        <span>LOGIN TO DASHBOARD</span>
-                    </button>
-                </div>
-            </div>
-            
-            <p class="text-center text-[10px] text-slate-500 mt-6">Secure access for authorized personnel only</p>
-        </div>
+<!-- LOGIN -->
+<div id="login-screen" class="fixed inset-0 z-[999] flex items-center justify-center" style="background:linear-gradient(135deg,#0f172a,#1e2937)">
+  <div class="w-full max-w-md mx-4">
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 mx-auto bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-3xl flex items-center justify-center shadow-xl shadow-cyan-500/30 mb-4">
+        <i class="fa-solid fa-shield-halved text-white text-3xl"></i>
+      </div>
+      <h1 class="text-3xl font-black tracking-tight">PRIME HORIZON</h1>
+      <p class="text-emerald-400 text-xs font-bold tracking-[3px] mt-1">ADMIN PANEL v6.1</p>
     </div>
-
-    <!-- MOBILE OVERLAY -->
-    <div id="mobile-overlay" onclick="closeMobileSidebar()" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
-    
-    <!-- MAIN LAYOUT -->
-    <div class="flex h-screen overflow-hidden">
-        
-        <!-- SIDEBAR -->
-        <div id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col fixed lg:static inset-y-0 left-0 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-out mobile-drawer">
-            <div class="p-6 border-b border-slate-800">
-                <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 bg-gradient-to-br from-cyan-500 via-cyan-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/30">
-                        <i class="fa-solid fa-shield-halved text-white text-2xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-2xl font-black tracking-tighter">PRIME HORIZON</h1>
-                        <p class="text-[10px] text-emerald-400 font-semibold tracking-[2px]">ADMIN PANEL v2.0</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- NAVIGATION ITEMS -->
-            <div class="p-3 flex-1 overflow-y-auto text-sm custom-scroll">
-                <div onclick="showSection('dashboard'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer nav-active nav-item" id="nav-dashboard">
-                    <i class="fa-solid fa-chart-line w-5 text-cyan-400"></i>
-                    <span class="font-semibold">Dashboard</span>
-                </div>
-                
-                <div onclick="showSection('sessions'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-sessions">
-                    <i class="fa-solid fa-mobile-screen-button w-5 text-sky-400"></i>
-                    <span class="font-semibold">Session Phone</span>
-                    <span id="badge-sessions" class="ml-auto px-2.5 py-0.5 text-[10px] bg-sky-500 text-white font-extrabold rounded-full hidden">0</span>
-                </div>
-
-                <div onclick="showSection('users'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-users">
-                    <i class="fa-solid fa-users w-5 text-slate-400"></i>
-                    <span class="font-semibold">Users Directory</span>
-                </div>
-
-                <div onclick="showSection('active-verified'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-active-verified">
-                    <i class="fa-solid fa-user-shield w-5 text-emerald-400"></i>
-                    <span class="font-semibold">Verified & Active</span>
-                </div>
-                
-                <div onclick="showSection('kyc'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-kyc">
-                    <i class="fa-solid fa-id-card-clip w-5 text-amber-400"></i>
-                    <span class="font-semibold">KYC Approvals</span>
-                    <span id="badge-kyc" class="ml-auto px-2.5 py-0.5 text-[10px] bg-amber-500 text-black font-extrabold rounded-full hidden">0</span>
-                </div>
-                
-                <div onclick="showSection('doubleauth'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-doubleauth">
-                    <i class="fa-solid fa-camera-rotate w-5 text-indigo-400"></i>
-                    <span class="font-semibold">Double Verification</span>
-                    <span id="badge-doubleauth" class="ml-auto px-2.5 py-0.5 text-[10px] bg-indigo-500 text-white font-extrabold rounded-full hidden">0</span>
-                </div>
-
-                <div onclick="showSection('password'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-password">
-                    <i class="fa-solid fa-unlock-keyhole w-5 text-rose-400"></i>
-                    <span class="font-semibold">Password Recovery</span>
-                    <span id="badge-password" class="ml-auto px-2.5 py-0.5 text-[10px] bg-rose-500 text-white font-extrabold rounded-full hidden">0</span>
-                </div>
-
-                <div onclick="showSection('deposits'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-deposits">
-                    <i class="fa-solid fa-wallet w-5 text-emerald-400"></i>
-                    <span class="font-semibold">Deposits</span>
-                    <span id="badge-deposits" class="ml-auto px-2.5 py-0.5 text-[10px] bg-emerald-500 text-white font-extrabold rounded-full hidden">0</span>
-                </div>
-                <div onclick="showSection('withdrawals'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-withdrawals">
-                    <i class="fa-solid fa-hand-holding-dollar w-5 text-purple-400"></i>
-                    <span class="font-semibold">Withdrawals</span>
-                    <span id="badge-withdrawals" class="ml-auto px-2.5 py-0.5 text-[10px] bg-purple-500 text-white font-extrabold rounded-full hidden">0</span>
-                </div>
-                <div onclick="showSection('plans'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-plans">
-                    <i class="fa-solid fa-seedling w-5 text-emerald-400"></i>
-                    <span class="font-semibold">Investment Plans</span>
-                </div>
-                <div onclick="showSection('tasks'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-tasks">
-                    <i class="fa-solid fa-list-check w-5 text-purple-400"></i>
-                    <span class="font-semibold">Daily Tasks</span>
-                </div>
-                <div onclick="showSection('social'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-social">
-                    <i class="fa-solid fa-share-alt w-5 text-pink-400"></i>
-                    <span class="font-semibold">Social Channels</span>
-                </div>
-                <div onclick="showSection('support'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-support">
-                    <i class="fa-solid fa-headset w-5 text-indigo-400"></i>
-                    <span class="font-semibold">Support &amp; Chat</span>
-                    <span id="badge-support" class="ml-auto px-2.5 py-0.5 text-[10px] bg-indigo-500 text-white font-extrabold rounded-full hidden">0</span>
-                </div>
-                <div onclick="showSection('feedback'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-feedback">
-                    <i class="fa-solid fa-comments w-5 text-amber-400"></i>
-                    <span class="font-semibold">Feedbacks &amp; Appeals</span>
-                </div>
-                <div onclick="showSection('complaints'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-complaints">
-                    <i class="fa-solid fa-exclamation-triangle w-5 text-orange-400"></i>
-                    <span class="font-semibold">Complaints</span>
-                    <span id="badge-complaints" class="ml-auto px-2.5 py-0.5 text-[10px] bg-orange-500 text-white font-extrabold rounded-full hidden">0</span>
-                </div>
-
-                <div onclick="showSection('global-logs'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-global-logs">
-                    <i class="fa-solid fa-chart-pie w-5 text-fuchsia-400"></i>
-                    <span class="font-semibold">Global Logs</span>
-                </div>
-
-                <div onclick="showSection('history'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-history">
-                    <i class="fa-solid fa-clock-rotate-left w-5 text-teal-400"></i>
-                    <span class="font-semibold">User History</span>
-                </div>
-                <div onclick="showSection('settings'); closeMobileSidebar()" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-1 cursor-pointer hover:bg-slate-800 nav-item" id="nav-settings">
-                    <i class="fa-solid fa-cog w-5 text-slate-400"></i>
-                    <span class="font-semibold">System Settings</span>
-                </div>
-            </div>
-
-            <div class="p-4 border-t border-slate-800 text-xs text-slate-500 flex items-center gap-2">
-                <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                <span class="font-medium">Super Admin • Live</span>
-            </div>
+    <div class="glass rounded-3xl p-8">
+      <h2 class="text-xl font-extrabold text-center mb-6">Admin Login</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs font-bold text-slate-400 block mb-1">USERNAME</label>
+          <input id="login-username" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-sm outline-none focus:border-cyan-500" placeholder="admin">
         </div>
-
-        <!-- MAIN CONTENT AREA -->
-        <div class="flex-1 flex flex-col overflow-hidden w-full relative">
-            
-            <!-- TOP HEADER -->
-            <div class="bg-slate-900 border-b border-slate-800 px-5 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-40">
-                <div class="flex items-center gap-3">
-                    <button onclick="toggleMobileSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-2xl transition-colors">
-                        <i class="fa-solid fa-bars text-xl"></i>
-                    </button>
-                    <h2 id="section-title" class="text-2xl lg:text-3xl font-extrabold tracking-tight">Dashboard</h2>
-                </div>
-                
-                <!-- Global Blinking Alert for New Updates -->
-                <div id="global-new-alert" class="hidden absolute left-1/2 transform -translate-x-1/2 top-blink-alert px-4 py-1.5 rounded-full text-sm font-extrabold items-center gap-2 cursor-pointer shadow-lg z-50">
-                    <i class="fa-solid fa-bolt"></i>
-                    <span><span id="global-new-qty">0</span> NEW ALERTS</span>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <div class="hidden sm:flex items-center px-4 py-2 bg-slate-800 rounded-2xl text-sm border border-slate-700">
-                        <div class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse mr-2"></div>
-                        <span class="font-medium">Live • <span id="live-users-count" class="font-bold text-cyan-400">0</span> Users</span>
-                    </div>
-                    <div class="flex items-center gap-2 bg-slate-800 rounded-2xl px-1 py-1 border border-slate-700">
-                        <button onclick="logoutAdmin()" class="px-4 lg:px-5 py-2 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white transition-all text-sm rounded-xl flex items-center gap-2 font-bold">
-                            <i class="fa-solid fa-sign-out-alt"></i>
-                            <span class="hidden sm:inline">Logout</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SCROLLABLE SECTIONS -->
-            <div class="flex-1 overflow-auto p-5 lg:p-8 bg-slate-950 custom-scroll">
-                
-                <!-- 1. DASHBOARD -->
-                <div id="section-dashboard" class="section active">
-                    
-                    <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl mb-6 flex items-center px-4 py-2.5 shadow-lg relative overflow-hidden">
-                        <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-slate-800 via-slate-800 to-transparent w-16 z-10 flex items-center px-4">
-                            <i class="fa-solid fa-bell text-amber-400 animate-bounce"></i>
-                        </div>
-                        <div class="slim-notification-bar flex-1 h-5 ml-10">
-                            <div id="slim-ticker-content" class="slim-notification-content text-[13px] text-slate-300 font-semibold tracking-wide flex gap-8">
-                                <span>Scanning live ecosystem metrics...</span>
-                            </div>
-                        </div>
-                        <div class="absolute inset-y-0 right-0 bg-gradient-to-l from-slate-800 via-slate-800 to-transparent w-12 z-10"></div>
-                    </div>
-
-                    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
-                        <div class="glass p-6 rounded-3xl stat-card border border-cyan-500/30">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-slate-400 text-xs lg:text-sm font-bold tracking-wider">TOTAL USERS</p>
-                                    <p id="dash-total-users" class="text-4xl lg:text-5xl font-black mt-3 text-cyan-400 metric-value">0</p>
-                                </div>
-                                <div class="w-12 h-12 bg-cyan-500/10 rounded-2xl flex items-center justify-center">
-                                    <i class="fa-solid fa-users text-3xl text-cyan-400"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="glass p-6 rounded-3xl stat-card border border-emerald-500/30">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-slate-400 text-xs lg:text-sm font-bold tracking-wider">TOTAL BALANCE</p>
-                                    <p id="dash-total-balance" class="text-4xl lg:text-5xl font-black mt-3 text-emerald-400 metric-value">Rs. 0</p>
-                                </div>
-                                <div class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
-                                    <i class="fa-solid fa-wallet text-3xl text-emerald-400"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="glass p-6 rounded-3xl stat-card border border-slate-700/50">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-slate-400 text-xs lg:text-sm font-medium tracking-wider">PENDING DEPOSITS</p>
-                                    <p id="dash-pending-deposit" class="text-4xl lg:text-5xl font-black mt-3 text-emerald-400 metric-value">0</p>
-                                </div>
-                                <div class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
-                                    <i class="fa-solid fa-upload text-3xl text-emerald-400"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="glass p-6 rounded-3xl stat-card border border-slate-700/50">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-slate-400 text-xs lg:text-sm font-medium tracking-wider">PENDING WITHDRAWALS</p>
-                                    <p id="dash-pending-withdraw" class="text-4xl lg:text-5xl font-black mt-3 text-purple-400 metric-value">0</p>
-                                </div>
-                                <div class="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center">
-                                    <i class="fa-solid fa-clock text-3xl text-purple-400"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-5 mb-8">
-                        <div class="glass p-5 rounded-3xl stat-card border border-slate-700/50">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-slate-400 text-[10px] font-bold tracking-wider">TOTAL DEPOSITS</p>
-                                    <p id="dash-total-deposits" class="text-2xl font-black mt-2 text-emerald-400 metric-value">Rs. 0</p>
-                                </div>
-                                <i class="fa-solid fa-arrow-down text-xl text-emerald-400"></i>
-                            </div>
-                        </div>
-                        <div class="glass p-5 rounded-3xl stat-card border border-slate-700/50">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-slate-400 text-[10px] font-bold tracking-wider">TOTAL WITHDRAWALS</p>
-                                    <p id="dash-total-withdrawals" class="text-2xl font-black mt-2 text-purple-400 metric-value">Rs. 0</p>
-                                </div>
-                                <i class="fa-solid fa-arrow-up text-xl text-purple-400"></i>
-                            </div>
-                        </div>
-                        <div class="glass p-5 rounded-3xl stat-card border border-slate-700/50">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-slate-400 text-[10px] font-bold tracking-wider">TOTAL COMPLAINTS</p>
-                                    <p id="dash-total-complaints" class="text-2xl font-black mt-2 text-orange-400 metric-value">0</p>
-                                </div>
-                                <i class="fa-solid fa-exclamation-triangle text-xl text-orange-400"></i>
-                            </div>
-                        </div>
-                        <div class="glass p-5 rounded-3xl stat-card border border-slate-700/50">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-slate-400 text-[10px] font-bold tracking-wider">TOTAL FEEDBACKS</p>
-                                    <p id="dash-total-feedbacks" class="text-2xl font-black mt-2 text-amber-400 metric-value">0</p>
-                                </div>
-                                <i class="fa-solid fa-comments text-xl text-amber-400"></i>
-                            </div>
-                        </div>
-                        <div class="glass p-5 rounded-3xl stat-card border border-slate-700/50">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-slate-400 text-[10px] font-bold tracking-wider">TOTAL APPEALS</p>
-                                    <p id="dash-total-appeals" class="text-2xl font-black mt-2 text-red-400 metric-value">0</p>
-                                </div>
-                                <i class="fa-solid fa-gavel text-xl text-red-400"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="glass p-7 rounded-3xl border border-slate-700/50">
-                        <h3 class="font-extrabold mb-6 flex items-center gap-3 text-lg">
-                            <i class="fa-solid fa-bolt text-cyan-400"></i> 
-                            <span>Quick Actions</span>
-                        </h3>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <button onclick="showSection('kyc')" class="p-5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-2xl text-left transition-all group border border-slate-700/60 modern-btn">
-                                <i class="fa-solid fa-id-card-clip text-2xl mb-4 block text-amber-400 group-hover:scale-110 transition-transform"></i>
-                                <span class="font-bold text-sm">Review KYC</span>
-                            </button>
-                            <button onclick="showSection('doubleauth')" class="p-5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-2xl text-left transition-all group border border-slate-700/60 modern-btn">
-                                <i class="fa-solid fa-camera-rotate text-2xl mb-4 block text-indigo-400 group-hover:scale-110 transition-transform"></i>
-                                <span class="font-bold text-sm">Double Verif.</span>
-                            </button>
-                            <button onclick="showSection('deposits')" class="p-5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-2xl text-left transition-all group border border-slate-700/60 modern-btn">
-                                <i class="fa-solid fa-wallet text-2xl mb-4 block text-emerald-400 group-hover:scale-110 transition-transform"></i>
-                                <span class="font-bold text-sm">Approve Deposits</span>
-                            </button>
-                            <button onclick="showSection('withdrawals')" class="p-5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-2xl text-left transition-all group border border-slate-700/60 modern-btn">
-                                <i class="fa-solid fa-hand-holding-dollar text-2xl mb-4 block text-purple-400 group-hover:scale-110 transition-transform"></i>
-                                <span class="font-bold text-sm">Withdrawals</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 1.5. SESSION PHONE -->
-                <div id="section-sessions" class="section">
-                    <div class="mb-6">
-                        <h3 class="section-header">Admin Sessions & Credentials</h3>
-                        <p class="text-slate-400 text-sm mt-1">Manage admin login details and multi-device sessions</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Change Username/Password -->
-                        <div class="glass p-6 rounded-3xl border border-slate-700/50">
-                            <h4 class="font-extrabold mb-5 flex items-center gap-2 text-sky-400">
-                                <i class="fa-solid fa-user-lock"></i>
-                                Update Credentials
-                            </h4>
-                            
-                            <div class="space-y-4 mb-6">
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 tracking-wider">OLD USERNAME (CURRENT)</label>
-                                    <input id="session-old-username" type="text" readonly class="mt-1.5 w-full px-5 py-3 bg-slate-900 border border-slate-700 text-slate-500 rounded-2xl text-sm outline-none cursor-not-allowed">
-                                </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 tracking-wider">OLD PASSWORD (CURRENT)</label>
-                                    <div class="relative mt-1.5">
-                                        <input id="session-old-password" type="text" readonly class="w-full px-5 py-3 bg-slate-900 border border-slate-700 text-slate-500 rounded-2xl text-sm outline-none cursor-not-allowed pr-10">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <hr class="border-slate-700 my-6">
-
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="text-xs font-bold text-slate-300 tracking-wider">NEW USERNAME</label>
-                                    <input id="session-new-username" type="text" placeholder="Enter new username" class="mt-1.5 w-full px-5 py-3 bg-slate-800 border border-slate-600 focus:border-sky-500 rounded-2xl text-sm outline-none transition-colors">
-                                </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-300 tracking-wider">NEW PASSWORD</label>
-                                    <input id="session-new-password" type="password" placeholder="Enter new password" class="mt-1.5 w-full px-5 py-3 bg-slate-800 border border-slate-600 focus:border-sky-500 rounded-2xl text-sm outline-none transition-colors">
-                                </div>
-                            </div>
-
-                            <button onclick="updateAdminCredentials()" class="w-full mt-6 py-3.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 rounded-2xl font-extrabold text-sm transition-all shadow-lg shadow-sky-600/30">
-                                Save New Credentials
-                            </button>
-                        </div>
-
-                        <!-- Active Devices List -->
-                        <div class="glass p-6 rounded-3xl border border-slate-700/50 flex flex-col">
-                            <div class="flex justify-between items-center mb-5">
-                                <h4 class="font-extrabold flex items-center gap-2 text-emerald-400">
-                                    <i class="fa-solid fa-server"></i>
-                                    Active Login Places
-                                </h4>
-                                <span class="text-xs px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full font-bold">Total: <span id="session-total-count">1</span></span>
-                            </div>
-
-                            <p class="text-xs text-slate-400 mb-4">View and manage other devices where the admin account is currently logged in.</p>
-
-                            <div id="session-devices-list" class="flex-1 space-y-3 overflow-y-auto max-h-[350px] custom-scroll pr-2">
-                                <!-- Devices will be populated by JS -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. USERS DIRECTORY -->
-                <div id="section-users" class="section">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                        <div>
-                            <h3 class="section-header">Users Directory</h3>
-                            <p class="text-slate-400 text-sm mt-1">Full control over all user accounts</p>
-                        </div>
-                        <button onclick="showAddUserModal()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-2xl text-sm font-extrabold flex items-center gap-2 shadow-lg shadow-emerald-600/30 modern-btn w-full sm:w-auto justify-center">
-                            <i class="fa-solid fa-user-plus"></i> 
-                            <span>Add New User</span>
-                        </button>
-                    </div>
-
-                    <div class="glass p-3 rounded-2xl mb-6 border border-slate-700/50 flex gap-3">
-                        <div class="relative flex-1">
-                            <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-500"></i>
-                            <input type="text" id="users-search-input" placeholder="Search by Phone, Name, or Email..." 
-                                   class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-11 pr-4 py-3 text-sm focus:border-cyan-500 outline-none"
-                                   onkeyup="filterUsersDirectory()">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-4" id="users-directory-feed"></div>
-                </div>
-
-                <!-- 3. VERIFIED & ACTIVE PLANS -->
-                <div id="section-active-verified" class="section">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 class="section-header">Verified & Active Nodes</h3>
-                            <p class="text-slate-400 text-sm">Manage users with Double Verification and Active Plans.</p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 gap-4" id="active-verified-feed"></div>
-                </div>
-
-                <!-- 4. KYC APPROVALS -->
-                <div id="section-kyc" class="section">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 class="section-header">KYC Approvals</h3>
-                            <p class="text-slate-400 text-sm">Verify user identity documents and details</p>
-                        </div>
-                    </div>
-                    <div id="kyc-requests-feed" class="space-y-4"></div>
-                </div>
-
-                <!-- 5. DOUBLE VERIFICATION -->
-                <div id="section-doubleauth" class="section">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 class="section-header">Double Verification Requests</h3>
-                            <p class="text-slate-400 text-sm">Verify live captures against baseline photos</p>
-                        </div>
-                    </div>
-                    <div id="doubleauth-requests-feed" class="space-y-4"></div>
-                </div>
-
-                <!-- 6. PASSWORD RECOVERY -->
-                <div id="section-password" class="section">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 class="section-header">Password Recovery Requests</h3>
-                            <p class="text-slate-400 text-sm">Process forgot password requests via WhatsApp</p>
-                        </div>
-                    </div>
-                    <div id="password-requests-feed" class="space-y-4"></div>
-                </div>
-
-                <!-- 7. DEPOSITS -->
-                <div id="section-deposits" class="section">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 class="section-header">Pending Deposits</h3>
-                            <p class="text-slate-400 text-sm">Review and approve incoming deposits</p>
-                        </div>
-                    </div>
-                    <div id="deposit-requests-feed" class="space-y-4"></div>
-                </div>
-
-                <!-- 8. WITHDRAWALS -->
-                <div id="section-withdrawals" class="section">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 class="section-header">Pending Withdrawals</h3>
-                            <p class="text-slate-400 text-sm">Process user withdrawal requests</p>
-                        </div>
-                    </div>
-                    <div id="withdrawal-requests-feed" class="space-y-4"></div>
-                </div>
-
-                <!-- 9. PLANS -->
-                <div id="section-plans" class="section">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                        <div>
-                            <h3 class="section-header">Investment Plans</h3>
-                            <p class="text-slate-400 text-sm">Manage available investment packages</p>
-                        </div>
-                        <button onclick="showAddPlanModal()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-2xl text-sm font-extrabold flex items-center gap-2 shadow-lg shadow-emerald-600/30 modern-btn w-full sm:w-auto justify-center">
-                            <i class="fa-solid fa-plus"></i> Add Plan
-                        </button>
-                    </div>
-                    <div class="glass rounded-3xl p-2 border border-slate-700/50" id="plans-list"></div>
-                </div>
-
-                <!-- 10. TASKS -->
-                <div id="section-tasks" class="section">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                        <div>
-                            <h3 class="section-header">Daily Tasks (Coin Rewards)</h3>
-                            <p class="text-slate-400 text-sm">Create and manage daily earning tasks</p>
-                        </div>
-                        <button onclick="showAddTaskModal()" class="px-6 py-3 bg-purple-600 hover:bg-purple-500 active:bg-purple-700 rounded-2xl text-sm font-extrabold flex items-center gap-2 shadow-lg shadow-purple-600/30 modern-btn w-full sm:w-auto justify-center">
-                            <i class="fa-solid fa-plus"></i> Add Task
-                        </button>
-                    </div>
-                    <div class="glass rounded-3xl p-2 border border-slate-700/50" id="tasks-list"></div>
-                </div>
-
-                <!-- 11. SOCIAL CHANNELS -->
-                <div id="section-social" class="section">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                        <div>
-                            <h3 class="section-header">Social Channels</h3>
-                            <p class="text-slate-400 text-sm">Manage community &amp; social links</p>
-                        </div>
-                        <button onclick="showAddSocialModal()" class="px-6 py-3 bg-pink-600 hover:bg-pink-500 active:bg-pink-700 rounded-2xl text-sm font-extrabold flex items-center gap-2 shadow-lg shadow-pink-600/30 modern-btn w-full sm:w-auto justify-center">
-                            <i class="fa-solid fa-plus"></i> Add Channel
-                        </button>
-                    </div>
-                    <div class="glass rounded-3xl p-2 border border-slate-700/50" id="social-list"></div>
-                </div>
-
-                <!-- 12. SUPPORT & CHAT -->
-                <div id="section-support" class="section">
-                    <h3 class="section-header mb-6">Support &amp; Live Chat Hub</h3>
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <div class="lg:col-span-4 glass rounded-3xl p-4 border border-slate-700/50">
-                            <div class="flex items-center justify-between mb-4 px-1">
-                                <h4 class="font-extrabold text-sm tracking-wider">ACTIVE CHANNELS</h4>
-                                <span id="support-channel-count" class="text-xs px-3 py-1 bg-slate-800 rounded-full font-mono">0</span>
-                            </div>
-                            <div id="support-active-channels-list" class="space-y-1.5 max-h-[420px] overflow-auto pr-1 custom-scroll"></div>
-                        </div>
-                        <div class="lg:col-span-8 glass rounded-3xl flex flex-col h-[520px] border border-slate-700/50 overflow-hidden">
-                            <div class="p-4 border-b border-slate-700 flex items-center gap-3 bg-slate-900/50">
-                                <img id="chat-header-avatar" src="https://i.pravatar.cc/36" class="w-9 h-9 rounded-2xl object-cover border border-slate-600 hidden">
-                                <div class="flex-1 min-w-0">
-                                    <div id="chat-header-user-title" class="font-extrabold truncate">Select a user to chat</div>
-                                    <div id="chat-header-user-phone" class="text-xs text-slate-400 font-mono truncate"></div>
-                                </div>
-                                <button id="clear-all-chat-btn" onclick="clearAllUserChat()" class="ml-auto px-4 py-2 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg text-xs font-bold transition-colors hidden">
-                                    <i class="fa-solid fa-trash mr-1"></i> Clear Entire Chat
-                                </button>
-                                <div id="chat-status-dot" class="w-3 h-3 bg-emerald-400 rounded-full hidden ml-2"></div>
-                            </div>
-                            <div id="admin-chat-messages-viewport" class="flex-1 p-4 overflow-auto space-y-4 bg-slate-900 custom-scroll"></div>
-                            <div class="p-4 border-t border-slate-700 flex gap-2 bg-slate-900/70">
-                                <input type="file" id="admin-chat-image-file-input" accept="image/*" class="hidden" onchange="handleAdminChatImageFileSelectionEvent(event)">
-                                <button onclick="document.getElementById('admin-chat-image-file-input').click()" class="w-12 h-11 flex-shrink-0 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-2xl transition-colors border border-slate-700">
-                                    <i class="fa-solid fa-paperclip text-lg"></i>
-                                </button>
-                                <input id="admin-chat-message-field" type="text" placeholder="Type your message..." class="flex-1 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-2xl px-5 text-sm outline-none transition-colors" onkeypress="if (event.key === 'Enter') transmitAdminLiveChatMessage()">
-                                <button onclick="transmitAdminLiveChatMessage()" class="px-7 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 rounded-2xl font-extrabold text-sm transition-all">Send</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 13. FEEDBACK & APPEALS -->
-                <div id="section-feedback" class="section">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div>
-                            <h3 class="section-header mb-4 flex items-center gap-2">
-                                <i class="fa-solid fa-comments text-amber-400"></i>
-                                <span>User Feedbacks</span>
-                            </h3>
-                            <div class="glass rounded-3xl p-4 max-h-[520px] overflow-auto border border-slate-700/50 custom-scroll" id="feedback-list"></div>
-                        </div>
-                        <div>
-                            <h3 class="section-header mb-4 flex items-center gap-2">
-                                <i class="fa-solid fa-gavel text-purple-400"></i>
-                                <span>Suspension Appeals</span>
-                            </h3>
-                            <div class="glass rounded-3xl p-4 max-h-[520px] overflow-auto border border-slate-700/50 custom-scroll" id="appeals-list"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 14. COMPLAINTS -->
-                <div id="section-complaints" class="section">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 class="section-header">User Complaints</h3>
-                            <p class="text-slate-400 text-sm">Review, reply, resolve or delete user complaints</p>
-                        </div>
-                    </div>
-                    <div id="complaints-feed" class="space-y-4"></div>
-                </div>
-
-                <!-- 15. GLOBAL LOGS -->
-                <div id="section-global-logs" class="section">
-                    <div class="mb-6">
-                        <h3 class="section-header">Global System Logs</h3>
-                        <p class="text-slate-400 text-sm mt-1">Filter overall platform statistics by date range</p>
-                    </div>
-
-                    <div class="glass p-5 rounded-3xl border border-slate-700/50 mb-6 flex flex-wrap gap-4 items-end">
-                        <div class="flex-1 min-w-[200px]">
-                            <label class="text-xs font-bold text-slate-400 mb-2 block">FROM DATE</label>
-                            <input type="date" id="log-date-from" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-fuchsia-500 outline-none">
-                        </div>
-                        <div class="flex-1 min-w-[200px]">
-                            <label class="text-xs font-bold text-slate-400 mb-2 block">TO DATE</label>
-                            <input type="date" id="log-date-to" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-fuchsia-500 outline-none">
-                        </div>
-                        <button onclick="generateGlobalLogs()" class="px-8 py-3 bg-fuchsia-600 hover:bg-fuchsia-500 rounded-xl font-bold text-sm shadow-lg shadow-fuchsia-600/30 transition-colors h-[46px]">Generate Report</button>
-                    </div>
-
-                    <div id="global-logs-results" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <!-- Filled by JS -->
-                    </div>
-                </div>
-
-                <!-- 16. USER HISTORY -->
-                <div id="section-history" class="section">
-                    <div class="mb-6">
-                        <h3 class="section-header">User Activity History</h3>
-                        <p class="text-slate-400 text-sm mt-1">Search by phone number, Gmail, Deposit ID or Withdraw ID to view a user's complete activity</p>
-                    </div>
-                    <div class="glass rounded-3xl p-5 border border-slate-700/50 mb-6">
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            <div class="relative flex-1">
-                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-slate-500"></i>
-                                <input id="history-search-input" type="text" placeholder="Enter phone number, Gmail, Deposit ID or Withdraw ID..." class="w-full bg-slate-800 border border-slate-700 focus:border-teal-500 rounded-2xl pl-11 pr-4 py-3.5 text-sm outline-none transition-colors" onkeypress="if (event.key === 'Enter') performHistorySearch()">
-                            </div>
-                            <button onclick="performHistorySearch()" class="px-8 py-3.5 bg-teal-600 hover:bg-teal-500 active:bg-teal-700 rounded-2xl text-sm font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-teal-600/30 modern-btn whitespace-nowrap">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                                <span>Search</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="history-results-container"></div>
-                </div>
-
-                <!-- 17. SYSTEM SETTINGS -->
-                <div id="section-settings" class="section">
-                    <h3 class="section-header mb-6">System Settings</h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        
-                        <!-- Deposit Gateways & Binance -->
-                        <div class="glass p-6 rounded-3xl border border-slate-700/50 md:col-span-2">
-                            <h4 class="font-extrabold mb-5 flex items-center gap-2">
-                                <i class="fa-solid fa-building-columns text-emerald-400"></i>
-                                Deposit Accounts & Network
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">JAZZCASH TITLE</label>
-                                    <input id="dep-jazz-title" placeholder="e.g. Muhammad Naeem" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-2xl mb-3 text-sm outline-none">
-                                    
-                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">JAZZCASH NUMBER</label>
-                                    <input id="dep-jazz-acc" placeholder="e.g. 03257436319" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-2xl mb-3 text-sm outline-none font-mono">
-                                </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">EASYPAISA TITLE</label>
-                                    <input id="dep-easy-title" placeholder="e.g. Muhammad Naeem" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-2xl mb-3 text-sm outline-none">
-                                    
-                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">EASYPAISA NUMBER</label>
-                                    <input id="dep-easy-acc" placeholder="e.g. 03257436319" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-2xl mb-3 text-sm outline-none font-mono">
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">BANK TITLE</label>
-                                    <input id="dep-bank-title" placeholder="e.g. Prime Horizon Corp Bank Node" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-2xl mb-3 text-sm outline-none">
-                                    
-                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">BANK IBAN / NUMBER</label>
-                                    <input id="dep-bank-acc" placeholder="e.g. IBAN-PK73MAIN00003257436319" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-2xl mb-3 text-sm outline-none font-mono">
-                                </div>
-                            </div>
-                            
-                            <!-- Binance Setup -->
-                            <div class="md:col-span-2 pt-4 border-t border-slate-700/50 mt-2">
-                                <h5 class="font-bold text-amber-400 mb-3 flex items-center gap-2"><i class="fa-brands fa-btc"></i> Binance Configuration (Crypto)</h5>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">BINANCE NICKNAME</label>
-                                        <input id="dep-binance-name" placeholder="e.g. PrimeCrypto" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-amber-500 rounded-2xl mb-3 text-sm outline-none">
-                                    </div>
-                                    <div>
-                                        <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">BINANCE UID</label>
-                                        <input id="dep-binance-uid" placeholder="e.g. 12345678" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-amber-500 rounded-2xl mb-3 text-sm outline-none font-mono">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button onclick="saveDepositGateways()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-2xl text-sm font-extrabold mt-2 transition-all">Save All Account Settings</button>
-                        </div>
-                        
-                        <!-- Maintenance -->
-                        <div class="glass p-6 rounded-3xl border border-slate-700/50">
-                            <h4 class="font-extrabold mb-5 flex items-center gap-3 text-base">
-                                <i class="fa-solid fa-tools text-orange-400"></i> 
-                                Maintenance Mode
-                            </h4>
-                            <div class="flex gap-3">
-                                <button onclick="toggleMaintenance(true)" class="flex-1 py-3 bg-red-600 hover:bg-red-500 active:bg-red-700 rounded-2xl text-sm font-extrabold transition-all">Enable</button>
-                                <button onclick="toggleMaintenance(false)" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-2xl text-sm font-extrabold transition-all">Disable</button>
-                            </div>
-                            <input id="maintenance-note" placeholder="Maintenance message for users..." class="mt-4 w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-orange-500 rounded-2xl text-sm outline-none transition-colors">
-                            <button onclick="updateMaintenanceNote()" class="mt-3 w-full py-3 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 rounded-2xl text-sm font-bold transition-all">Update Note</button>
-                        </div>
-                        
-                        <!-- Limits & Rates -->
-                        <div class="glass p-6 rounded-3xl border border-slate-700/50">
-                            <h4 class="font-extrabold mb-5 flex items-center gap-2">
-                                <i class="fa-solid fa-scale-balanced text-cyan-400"></i>
-                                Limits &amp; Rates
-                            </h4>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="text-xs font-semibold text-slate-400 tracking-wider">DOLLAR RATE (PKR)</label>
-                                    <input type="number" id="dollar-rate" step="0.01" class="mt-1.5 w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-2xl text-sm outline-none transition-colors" placeholder="e.g. 278.50">
-                                </div>
-                                <div>
-                                    <label class="text-xs font-semibold text-slate-400 tracking-wider">MINIMUM WITHDRAWAL (Rs)</label>
-                                    <input type="number" id="min-withdraw" class="mt-1.5 w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-2xl text-sm outline-none transition-colors">
-                                </div>
-                                <div>
-                                    <label class="text-xs font-semibold text-slate-400 tracking-wider">COINS PER RUPEE</label>
-                                    <input type="number" id="coins-per-rupee" step="0.1" class="mt-1.5 w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-cyan-500 rounded-2xl text-sm outline-none transition-colors">
-                                </div>
-                                <button onclick="saveLimits()" class="w-full py-3.5 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 rounded-2xl font-extrabold text-sm mt-2 transition-all">Save Limits & Rates</button>
-                            </div>
-                        </div>
-
-                        <!-- NEW: Dynamic Multiple Features Video Setup -->
-                        <div class="glass p-6 rounded-3xl md:col-span-2 border border-slate-700/50">
-                            <div class="flex justify-between items-center mb-5">
-                                <h4 class="font-extrabold flex items-center gap-2 text-red-400">
-                                    <i class="fa-brands fa-youtube"></i>
-                                    Features Videos Setup (Multiple)
-                                </h4>
-                                <button onclick="addNewVideoField()" class="px-4 py-2 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-xl text-xs font-bold transition-colors border border-red-500/30">
-                                    <i class="fa-solid fa-plus mr-1"></i> Add Another Video
-                                </button>
-                            </div>
-                            
-                            <p class="text-xs text-slate-400 mb-4">Add multiple tutorial or feature videos. Users will see them as tabs.</p>
-
-                            <!-- Dynamic Container where all videos will be listed -->
-                            <div id="dynamic-videos-container" class="space-y-4 mb-6">
-                                <!-- Fields will be injected here via JS -->
-                            </div>
-
-                            <!-- Preview Area -->
-                            <div class="flex flex-col mt-6 border-t border-slate-700/50 pt-6">
-                                <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5 block">PREVIEW (LATEST VIDEO)</label>
-                                <div id="video-preview-container" class="w-full max-w-md mx-auto aspect-video flex items-center justify-center bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden relative">
-                                    <span class="text-slate-500 text-xs relative z-10">Video preview will appear here</span>
-                                </div>
-                            </div>
-
-                            <button onclick="saveAllFeaturesVideos()" class="w-full mt-6 py-3.5 bg-red-600 hover:bg-red-500 active:bg-red-700 rounded-2xl font-extrabold text-sm transition-all shadow-lg shadow-red-600/30">
-                                Save All Videos
-                            </button>
-                        </div>
-                        
-                        <!-- Popup Announcement -->
-                        <div class="glass p-6 rounded-3xl md:col-span-2 border border-slate-700/50">
-                            <h4 class="font-extrabold mb-5 flex items-center gap-2">
-                                <i class="fa-solid fa-bullhorn text-pink-400"></i>
-                                Popup Announcement
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <input id="popup-title" placeholder="Announcement Title" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-pink-500 rounded-2xl mb-3 text-sm outline-none transition-colors">
-                                    <textarea id="popup-desc" placeholder="Announcement description..." rows="3" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-pink-500 rounded-2xl text-sm outline-none transition-colors"></textarea>
-                                </div>
-                                <div class="flex flex-col">
-                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5">ANNOUNCEMENT IMAGE</label>
-                                    <div class="flex items-center gap-3 mb-3">
-                                        <div id="popup-image-preview" class="w-14 h-14 bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden flex-shrink-0 hidden">
-                                            <img id="popup-image-preview-img" class="w-full h-full object-cover">
-                                        </div>
-                                        <div class="flex-1">
-                                            <input type="file" id="popup-image-file" accept="image/*" class="hidden" onchange="uploadPopupImage(event)">
-                                            <button onclick="document.getElementById('popup-image-file').click()" class="w-full px-4 py-3 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-colors">
-                                                <i class="fa-solid fa-upload"></i>
-                                                <span>Upload Image</span>
-                                            </button>
-                                            <div id="popup-image-url-display" class="text-[10px] text-emerald-400 mt-1.5 font-mono break-all hidden"></div>
-                                        </div>
-                                    </div>
-                                    <div class="flex gap-3 mt-auto">
-                                        <button onclick="savePopupAnnouncement(true)" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-2xl text-sm font-extrabold transition-all">Activate</button>
-                                        <button onclick="savePopupAnnouncement(false)" class="flex-1 py-3 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 rounded-2xl text-sm font-extrabold transition-all">Deactivate</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- About Us -->
-                        <div class="glass p-6 rounded-3xl md:col-span-2 border border-slate-700/50">
-                            <h4 class="font-extrabold mb-5 flex items-center gap-2">
-                                <i class="fa-solid fa-info-circle text-sky-400"></i>
-                                About Us (Shows in User App)
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <textarea id="about-us-text" placeholder="Write about Prime Horizon..." rows="4" class="w-full px-5 py-3 bg-slate-800 border border-slate-700 focus:border-sky-500 rounded-2xl text-sm outline-none transition-colors"></textarea>
-                                </div>
-                                <div class="flex flex-col">
-                                    <label class="text-xs font-bold text-slate-400 tracking-wider mb-1.5">ABOUT US IMAGE</label>
-                                    <div class="flex items-center gap-3 mb-3">
-                                        <div id="about-image-preview" class="w-14 h-14 bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden flex-shrink-0 hidden">
-                                            <img id="about-image-preview-img" class="w-full h-full object-cover">
-                                        </div>
-                                        <div class="flex-1">
-                                            <input type="file" id="about-image-file" accept="image/*" class="hidden" onchange="uploadAboutImage(event)">
-                                            <button onclick="document.getElementById('about-image-file').click()" class="w-full px-4 py-3 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-colors">
-                                                <i class="fa-solid fa-upload"></i>
-                                                <span>Upload Image</span>
-                                            </button>
-                                            <div id="about-image-url-display" class="text-[10px] text-emerald-400 mt-1.5 font-mono break-all hidden"></div>
-                                        </div>
-                                    </div>
-                                    <button onclick="saveAboutUs()" class="mt-auto py-3 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 rounded-2xl text-sm font-extrabold transition-all">Save About Us</button>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
+        <div>
+          <label class="text-xs font-bold text-slate-400 block mb-1">PASSWORD</label>
+          <input id="login-password" type="password" class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-sm outline-none focus:border-cyan-500" placeholder="••••••••">
         </div>
+        <label class="flex items-center gap-2 text-xs font-bold text-slate-300 cursor-pointer">
+          <input type="checkbox" id="login-2h-check" class="login-checkbox"> Auto login next 2 hours
+        </label>
+        <button onclick="performAdminLogin()" class="w-full py-3.5 bg-gradient-to-r from-cyan-600 to-emerald-600 rounded-2xl font-extrabold modern-btn">LOGIN TO DASHBOARD</button>
+      </div>
     </div>
+  </div>
+</div>
 
-    <!-- Toast Notifications Container -->
-    <div id="toast-container" class="fixed bottom-6 right-6 z-[999] flex flex-col gap-2 pointer-events-none"></div>
+<div id="mobile-overlay" onclick="closeMobileSidebar()" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
 
-    <!-- System Lock Screen (Admin 2 Billing) -->
-    <div id="system-lock-screen" class="hidden fixed inset-0 bg-slate-950 z-[999] overflow-y-auto">
-        <div class="min-h-full flex items-center justify-center p-4">
-            <div class="max-w-lg w-full">
-                <div class="text-center mb-6">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-red-500/10 rounded-3xl mb-4">
-                        <i class="fa-solid fa-lock text-red-400 text-4xl"></i>
-                    </div>
-                    <h2 class="text-3xl font-extrabold text-white">System automatic Currently OFF</h2>
-                    <p class="text-red-400 mt-1">محترم ناظم، آپ کا پلان سالانہ ہے اس لیے بل ادا کریں۔ براہِ کرم ابھی بل ادا کریں تاکہ سسٹم بحال ہو جائے۔</p>
-                </div>
-
-                <div class="glass rounded-3xl p-7 border border-red-500/20">
-                    <div class="text-center mb-6">
-                        <div class="text-sm text-red-300">CURRENT BILL</div>
-                        <div id="system-lock-bill-amount" class="text-6xl font-black text-white mt-1">Rs. 10,000</div>
-                    </div>
-
-                    <div class="bg-slate-900 rounded-2xl p-5 mb-6 border border-slate-700">
-                        <div class="flex items-center gap-3 mb-4">
-                            <i class="fa-solid fa-university text-emerald-400 text-2xl"></i>
-                            <div>
-                                <div class="font-extrabold text-lg">Meezan Bank</div>
-                                <div class="text-xs text-emerald-400">Official Payment Account</div>
-                            </div>
-                        </div>
-                        <div class="space-y-3 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-slate-400">Account Number</span>
-                                <span class="font-mono font-bold">00300111855522</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-slate-400">Account Title</span>
-                                <span class="font-bold">Muhammad Naeem</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="text-center mb-6">
-                        <p class="text-sm text-slate-300 leading-relaxed">
-                            براہِ کرم رقم ادا کرنے کے بعد ٹرانزیکشن آئی ڈی درج کریں اور رسید کا سکرین شاٹ لگائیں۔
-                        </p>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-xs font-bold text-slate-400 tracking-wider">TRX ID / Reference</label>
-                            <input id="system-trx-id" type="text" placeholder="Enter TRX ID" class="mt-1.5 w-full px-5 py-3.5 bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-2xl text-lg outline-none">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-slate-400 tracking-wider">SCREENSHOT (Proof)</label>
-                            <input type="file" id="system-screenshot" accept="image/*" class="hidden" onchange="handleSystemScreenshot(event)">
-                            <button onclick="document.getElementById('system-screenshot').click()" class="mt-1.5 w-full px-5 py-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-2xl text-sm font-bold flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-upload"></i>
-                                <span>Upload Screenshot</span>
-                            </button>
-                            <div id="system-screenshot-preview" class="mt-3 hidden">
-                                <img id="system-screenshot-img" class="max-h-28 rounded-2xl border border-slate-700 mx-auto">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-6">
-                        <button onclick="submitSystemBillPayment()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-extrabold text-lg">SUBMIT PAYMENT</button>
-                    </div>
-                    <p class="text-center text-xs text-slate-500 mt-4">Developer Payment</p>
-                </div>
-            </div>
+<div id="app-shell" class="hidden flex h-screen overflow-hidden">
+  <!-- SIDEBAR -->
+  <div id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col fixed lg:static inset-y-0 left-0 z-50 -translate-x-full lg:translate-x-0 transition-transform duration-300">
+    <div class="p-5 border-b border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-shield-halved text-white"></i></div>
+        <div>
+          <div class="font-black text-lg leading-none">PRIME HORIZON</div>
+          <div class="text-[10px] text-emerald-400 font-bold tracking-widest">ADMIN v6.1</div>
         </div>
+      </div>
     </div>
+    <div class="p-2 flex-1 overflow-y-auto custom-scroll text-sm space-y-0.5">
+      <div onclick="showSection('dashboard')" class="nav-item nav-active flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer" id="nav-dashboard"><i class="fa-solid fa-chart-line w-5 text-cyan-400"></i><span class="font-semibold">Dashboard</span><span id="badge-alert" class="badge bg-rose-500 text-white ml-auto hidden animate-pulse">!</span></div>
+      <div onclick="showSection('overview')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-overview"><i class="fa-solid fa-chart-pie w-5 text-sky-400"></i><span class="font-semibold">Overview &amp; P/L</span></div>
+      <div onclick="showSection('activeplans')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-activeplans"><i class="fa-solid fa-bolt w-5 text-yellow-400"></i><span class="font-semibold">Active Plans</span></div>
+      <div onclick="showSection('sessions')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-sessions"><i class="fa-solid fa-mobile-screen w-5 text-indigo-400"></i><span class="font-semibold">User Sessions</span></div>
+      <div onclick="showSection('users')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-users"><i class="fa-solid fa-users w-5 text-slate-400"></i><span class="font-semibold">Users</span></div>
+      <div onclick="showSection('kyc')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-kyc"><i class="fa-solid fa-id-card w-5 text-amber-400"></i><span class="font-semibold">KYC</span><span id="badge-kyc" class="badge bg-amber-500 text-black ml-auto hidden">0</span></div>
+      <div onclick="showSection('deposits')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-deposits"><i class="fa-solid fa-wallet w-5 text-emerald-400"></i><span class="font-semibold">Deposits</span><span id="badge-deposits" class="badge bg-emerald-500 text-white ml-auto hidden">0</span></div>
+      <div onclick="showSection('withdrawals')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-withdrawals"><i class="fa-solid fa-hand-holding-dollar w-5 text-purple-400"></i><span class="font-semibold">Withdrawals</span><span id="badge-withdrawals" class="badge bg-purple-500 text-white ml-auto hidden">0</span></div>
+      <div onclick="showSection('complaints')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-complaints"><i class="fa-solid fa-flag w-5 text-rose-400"></i><span class="font-semibold">Complaints</span><span id="badge-complaints" class="badge bg-rose-500 text-white ml-auto hidden">0</span></div>
+      <div onclick="showSection('entertainment')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-entertainment"><i class="fa-solid fa-comments w-5 text-fuchsia-400"></i><span class="font-semibold">Entertainment</span></div>
+      <div onclick="showSection('luckydraw')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-luckydraw"><i class="fa-solid fa-dice w-5 text-fuchsia-400"></i><span class="font-semibold">Lucky Draw</span></div>
+      <div onclick="showSection('plans')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-plans"><i class="fa-solid fa-seedling w-5 text-teal-400"></i><span class="font-semibold">Plans</span></div>
+      <div onclick="showSection('settings')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-settings"><i class="fa-solid fa-gear w-5 text-slate-400"></i><span class="font-semibold">Settings</span></div>
+      <div onclick="adminLogout()" class="flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-rose-900/30 text-rose-400 mt-4"><i class="fa-solid fa-right-from-bracket w-5"></i><span class="font-semibold">Logout</span></div>
+    </div>
+  </div>
 
-    <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
-    <!-- Custom JS File -->
-    <script src="index.js"></script>
+  <!-- MAIN -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <header class="h-14 border-b border-slate-800 flex items-center justify-between px-4 bg-slate-900/80">
+      <button class="lg:hidden p-2" onclick="openMobileSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <div class="font-bold text-sm" id="top-section-title">Dashboard</div>
+      <div id="maint-top-flag" class="hidden text-[10px] font-black uppercase px-2 py-1 rounded-lg bg-rose-600 text-white">Maintenance ON</div>
+    </header>
+    <main class="flex-1 overflow-y-auto p-4 custom-scroll">
+
+      <!-- DASHBOARD -->
+      <section id="section-dashboard" class="section active space-y-4">
+        <h2 class="section-header text-2xl font-black">Dashboard</h2>
+        <div id="admin-live-alert" class="hidden glass rounded-2xl p-3 border border-rose-500/40 cursor-pointer" onclick="jumpToAlert()">
+          <div class="flex items-center gap-2 text-sm font-bold text-rose-300"><span class="animate-pulse">🔔</span> <span id="admin-alert-text">New alert</span></div>
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="glass rounded-2xl p-4"><div class="text-[10px] text-slate-400 uppercase font-bold">Users</div><div class="text-2xl font-black metric" id="stat-users">0</div></div>
+          <div class="glass rounded-2xl p-4"><div class="text-[10px] text-amber-400 uppercase font-bold">KYC Pending</div><div class="text-2xl font-black" id="stat-kyc">0</div></div>
+          <div class="glass rounded-2xl p-4"><div class="text-[10px] text-emerald-400 uppercase font-bold">Dep Pending</div><div class="text-2xl font-black" id="stat-dep">0</div></div>
+          <div class="glass rounded-2xl p-4"><div class="text-[10px] text-purple-400 uppercase font-bold">WD Pending</div><div class="text-2xl font-black" id="stat-wd">0</div></div>
+          <div class="glass rounded-2xl p-4"><div class="text-[10px] text-teal-400 uppercase font-bold">Total Deposit</div><div class="text-xl font-black" id="stat-total-dep">Rs. 0</div></div>
+          <div class="glass rounded-2xl p-4"><div class="text-[10px] text-indigo-400 uppercase font-bold">Total Withdraw</div><div class="text-xl font-black" id="stat-total-wd">Rs. 0</div></div>
+          <div class="glass rounded-2xl p-4"><div class="text-[10px] text-emerald-400 uppercase font-bold">Profit</div><div class="text-xl font-black text-emerald-400" id="stat-profit">Rs. 0</div></div>
+          <div class="glass rounded-2xl p-4"><div class="text-[10px] text-rose-400 uppercase font-bold">Loss / Net</div><div class="text-xl font-black" id="stat-net">Rs. 0</div></div>
+        </div>
+        <div class="glass rounded-2xl p-4">
+          <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div>
+              <div class="text-sm font-bold">Maintenance Mode</div>
+              <div class="text-xs text-slate-400">When ON, user app shows maintenance screen</div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="setMaintenance(true)" class="px-4 py-2 bg-rose-600 rounded-xl text-xs font-bold modern-btn">Enable</button>
+              <button onclick="setMaintenance(false)" class="px-4 py-2 bg-emerald-600 rounded-xl text-xs font-bold modern-btn">Disable</button>
+            </div>
+          </div>
+          <textarea id="maintenance-note" rows="2" class="w-full mt-3 bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm" placeholder="Maintenance message for users"></textarea>
+          <button onclick="saveMaintenanceNote()" class="mt-2 px-4 py-2 bg-slate-700 rounded-xl text-xs font-bold">Save Note</button>
+          <div class="text-xs mt-2" id="maint-status-text">Status: OFF</div>
+        </div>
+      </section>
+
+      <!-- USERS -->
+      <section id="section-users" class="section space-y-3">
+        <div class="flex justify-between items-center gap-2 flex-wrap">
+          <h2 class="text-xl font-black">Users Directory</h2>
+          <input id="user-search" oninput="renderUsers()" placeholder="Search phone / name" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm w-full max-w-xs">
+        </div>
+        <div id="users-list" class="space-y-2"></div>
+      </section>
+
+      <!-- KYC -->
+      <section id="section-kyc" class="section space-y-3">
+        <h2 class="text-xl font-black">KYC Approvals</h2>
+        <p class="text-xs text-slate-400">User submits: Name, DOB, CNIC last 4 digits → Pending → Approve = Verified</p>
+        <div id="kyc-list" class="space-y-2"></div>
+      </section>
+
+      <!-- DEPOSITS -->
+      <section id="section-deposits" class="section space-y-3">
+        <h2 class="text-xl font-black">Deposits Queue</h2>
+        <div id="deposits-list" class="space-y-2"></div>
+      </section>
+
+      <!-- WITHDRAWALS -->
+      <section id="section-withdrawals" class="section space-y-3">
+        <h2 class="text-xl font-black">Withdrawals Queue</h2>
+        <div id="withdrawals-list" class="space-y-2"></div>
+      </section>
+
+      <!-- COMPLAINTS -->
+      <section id="section-complaints" class="section space-y-3">
+        <h2 class="text-xl font-black">Complaints</h2>
+        <div id="complaints-list" class="space-y-2"></div>
+      </section>
+
+      <!-- LUCKY DRAW -->
+      <section id="section-luckydraw" class="section space-y-3">
+        <h2 class="text-xl font-black">Lucky Draw Monitor</h2>
+        <p class="text-xs text-slate-400">Auto windows: 1st week (10 seats / Rs.100 → winner 800) · Last week (5 seats / Rs.250 → 750/150/50). Refund if not filled.</p>
+        <div id="ld-admin-list" class="space-y-2"></div>
+      </section>
+
+      <!-- PLANS -->
+      <section id="section-plans" class="section space-y-3">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-black">Investment Plans</h2>
+          <button onclick="showAddPlanModal()" class="px-4 py-2 bg-emerald-600 rounded-xl text-xs font-bold modern-btn">+ Add Plan</button>
+        </div>
+        <div id="plans-list" class="space-y-2"></div>
+      </section>
+
+      <!-- SETTINGS -->
+      
+      <!-- OVERVIEW P/L -->
+      
+      <!-- ENTERTAINMENT MODERATION -->
+      <section id="section-entertainment" class="section space-y-4">
+        <h2 class="text-xl font-black">Entertainment Moderation</h2>
+        <p class="text-xs text-slate-400">Public chat, private rooms, money requests — view &amp; delete</p>
+
+        <div class="flex gap-2 flex-wrap text-xs font-bold">
+          <button type="button" onclick="entAdminTab('public')" id="eadmin-tab-public" class="px-4 py-2 rounded-xl bg-fuchsia-600 text-white">Public Chat</button>
+          <button type="button" onclick="entAdminTab('private')" id="eadmin-tab-private" class="px-4 py-2 rounded-xl bg-slate-700 text-slate-200">Private Chats</button>
+          <button type="button" onclick="entAdminTab('money')" id="eadmin-tab-money" class="px-4 py-2 rounded-xl bg-slate-700 text-slate-200">Money Requests</button>
+          <button type="button" onclick="entAdminTab('violations')" id="eadmin-tab-violations" class="px-4 py-2 rounded-xl bg-slate-700 text-slate-200">Violations</button>
+        </div>
+
+        <div id="eadmin-public" class="space-y-2">
+          <div class="flex justify-between items-center">
+            <h3 class="font-bold text-fuchsia-300 text-sm">Public messages</h3>
+            <button type="button" onclick="clearAllPublicChat()" class="px-3 py-1.5 bg-rose-800 rounded-lg text-[10px] font-bold">Clear All Public</button>
+          </div>
+          <div id="eadmin-public-list" class="space-y-2 max-h-[60vh] overflow-y-auto custom-scroll"></div>
+        </div>
+
+        <div id="eadmin-private" class="space-y-2 hidden">
+          <h3 class="font-bold text-indigo-300 text-sm">Private chat rooms</h3>
+          <div id="eadmin-private-rooms" class="space-y-2 mb-3"></div>
+          <div id="eadmin-private-thread" class="glass rounded-2xl p-3 min-h-[120px] text-sm text-slate-400">Select a room</div>
+        </div>
+
+        <div id="eadmin-money" class="space-y-2 hidden">
+          <h3 class="font-bold text-amber-300 text-sm">Money requests (all users)</h3>
+          <div id="eadmin-money-list" class="space-y-2 max-h-[60vh] overflow-y-auto custom-scroll"></div>
+        </div>
+
+        <div id="eadmin-violations" class="space-y-2 hidden">
+          <h3 class="font-bold text-rose-300 text-sm">Chat violations / bans</h3>
+          <div id="eadmin-violations-list" class="space-y-2 max-h-[60vh] overflow-y-auto custom-scroll"></div>
+        </div>
+      </section>
+
+      <section id="section-overview" class="section space-y-3">
+        <h2 class="text-xl font-black">Overview · All Users P/L</h2>
+        <p class="text-xs text-slate-400">Deposit, withdraw, profit, loss per user</p>
+        <div id="overview-list" class="space-y-2"></div>
+      </section>
+
+      <!-- ACTIVE PLANS -->
+      <section id="section-activeplans" class="section space-y-3">
+        <h2 class="text-xl font-black">Active Plans</h2>
+        <div id="activeplans-list" class="space-y-2"></div>
+      </section>
+
+      <!-- SESSIONS -->
+      <section id="section-sessions" class="section space-y-3">
+        <h2 class="text-xl font-black">User Sessions</h2>
+        <p class="text-xs text-slate-400">Devices / locations users are logged in from. Force logout available.</p>
+        <input id="session-search" oninput="renderAllSessions()" placeholder="Filter by phone" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm w-full max-w-xs">
+        <div id="sessions-list" class="space-y-2"></div>
+      </section>
+
+      <section id="section-settings" class="section space-y-4">
+        <h2 class="text-xl font-black">Settings</h2>
+
+        <div class="glass rounded-2xl p-4 space-y-3 border border-cyan-500/20">
+          <h3 class="font-bold text-cyan-400">Admin Login Credentials</h3>
+          <p class="text-[10px] text-slate-400">Change username &amp; password used on the admin login screen. Stored securely in Firebase.</p>
+          <div>
+            <label class="text-[10px] text-slate-400 font-bold">New Username</label>
+            <input id="adm-new-user" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm mt-1" placeholder="Username" autocomplete="off">
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 font-bold">New Password</label>
+            <input id="adm-new-pass" type="password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm mt-1" placeholder="New password" autocomplete="new-password">
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 font-bold">Confirm Password</label>
+            <input id="adm-new-pass2" type="password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm mt-1" placeholder="Confirm password" autocomplete="new-password">
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 font-bold">Current Password (required)</label>
+            <input id="adm-cur-pass" type="password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm mt-1" placeholder="Current password to confirm">
+          </div>
+          <button type="button" onclick="saveAdminCredentials()" class="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 rounded-xl text-xs font-extrabold modern-btn">Save Username &amp; Password</button>
+          <p id="adm-cred-hint" class="text-[10px] text-slate-500">Default (if never changed): admin / admin123</p>
+        </div>
+
+        <div class="glass rounded-2xl p-4 space-y-3">
+          <h3 class="font-bold text-cyan-400">Deposit Accounts</h3>
+          <div class="grid md:grid-cols-2 gap-3 text-sm">
+            <div class="space-y-1"><label class="text-[10px] text-slate-400 font-bold">JazzCash Title</label><input id="dep-jazz-title" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2"></div>
+            <div class="space-y-1"><label class="text-[10px] text-slate-400 font-bold">JazzCash Account</label><input id="dep-jazz-acc" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2"></div>
+            <div class="space-y-1"><label class="text-[10px] text-slate-400 font-bold">EasyPaisa Title</label><input id="dep-easy-title" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2"></div>
+            <div class="space-y-1"><label class="text-[10px] text-slate-400 font-bold">EasyPaisa Account</label><input id="dep-easy-acc" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2"></div>
+            <div class="space-y-1"><label class="text-[10px] text-slate-400 font-bold">Bank Title</label><input id="dep-bank-title" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2"></div>
+            <div class="space-y-1"><label class="text-[10px] text-slate-400 font-bold">Bank Account</label><input id="dep-bank-acc" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2"></div>
+            <div class="space-y-1"><label class="text-[10px] text-amber-400 font-bold">Binance Title</label><input id="dep-binance-title" class="w-full bg-slate-900 border border-amber-700/40 rounded-xl px-3 py-2"></div>
+            <div class="space-y-1"><label class="text-[10px] text-amber-400 font-bold">Binance Address / UID</label><input id="dep-binance-acc" class="w-full bg-slate-900 border border-amber-700/40 rounded-xl px-3 py-2"></div>
+            <div class="space-y-1"><label class="text-[10px] text-amber-400 font-bold">Binance Tax %</label><input id="dep-binance-tax" type="number" step="0.1" class="w-full bg-slate-900 border border-amber-700/40 rounded-xl px-3 py-2" value="1"></div>
+          </div>
+          <button onclick="saveDepositAccounts()" class="px-4 py-2 bg-cyan-600 rounded-xl text-xs font-bold modern-btn">Save Deposit Accounts</button>
+        </div>
+
+        <div class="glass rounded-2xl p-4 space-y-3">
+          <h3 class="font-bold text-emerald-400">Limits & Rates</h3>
+          <div class="grid md:grid-cols-3 gap-3 text-sm">
+            <div><label class="text-[10px] text-slate-400 font-bold">Dollar Rate (PKR)</label><input id="set-dollar" type="number" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2"></div>
+            <div><label class="text-[10px] text-slate-400 font-bold">Coin → Rs rate</label><input id="set-coin-rate" type="number" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2"></div>
+            <div><label class="text-[10px] text-slate-400 font-bold">Default Withdraw Limit</label><input id="set-wd-limit" type="number" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2"></div>
+          </div>
+          <button onclick="saveRates()" class="px-4 py-2 bg-emerald-600 rounded-xl text-xs font-bold modern-btn">Save Rates</button>
+        </div>
+
+        <div class="glass rounded-2xl p-4 space-y-3">
+          <h3 class="font-bold text-fuchsia-400">Play Games Links</h3>
+          <p class="text-[10px] text-slate-400">One per line: Title | https://link</p>
+          <textarea id="set-play-games" rows="4" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm" placeholder="Carrom Arena | https://example.com/game&#10;Lucky Spin | https://example.com/spin"></textarea>
+          <button onclick="savePlayGames()" class="px-4 py-2 bg-fuchsia-600 rounded-xl text-xs font-bold modern-btn">Save Games</button>
+        </div>
+
+        <div class="glass rounded-2xl p-4 space-y-3">
+          <h3 class="font-bold text-amber-400">Popup Announcement</h3>
+          <input id="popup-title" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Title">
+          <textarea id="popup-desc" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm" placeholder="Description text only (no raw links shown to users)"></textarea>
+          <input id="popup-link" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Optional button link (https:// or wa.me/...)">
+          <div>
+            <label class="text-[10px] text-slate-400 font-bold">Announcement Image</label>
+            <input type="file" id="popup-image-file" accept="image/*" onchange="uploadPopupImage(event)" class="w-full text-xs text-slate-400 mt-1">
+            <div id="popup-image-status" class="text-[10px] text-slate-500 mt-1"></div>
+            <img id="popup-image-preview" src="" class="hidden max-h-32 rounded-xl mt-2 border border-slate-700">
+            <input type="hidden" id="popup-image-url">
+          </div>
+          <div class="flex gap-2">
+            <button onclick="savePopup(true)" class="px-4 py-2 bg-amber-600 rounded-xl text-xs font-bold">Activate</button>
+            <button onclick="savePopup(false)" class="px-4 py-2 bg-slate-700 rounded-xl text-xs font-bold">Deactivate</button>
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-4 space-y-3">
+          <h3 class="font-bold text-teal-400">About Us / Corporate Manifesto</h3>
+          <p class="text-[10px] text-slate-400">Write one point per line — user app shows as bullet list</p>
+          <textarea id="about-text" rows="5" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm" placeholder="Point one&#10;Point two&#10;Point three"></textarea>
+          <div>
+            <label class="text-[10px] text-slate-400 font-bold">About Image</label>
+            <input type="file" id="about-image-file" accept="image/*" onchange="uploadAboutImage(event)" class="w-full text-xs text-slate-400 mt-1">
+            <div id="about-image-status" class="text-[10px] text-slate-500"></div>
+            <img id="about-image-preview" src="" class="hidden max-h-32 rounded-xl mt-2 border border-slate-700">
+            <input type="hidden" id="about-image-url">
+          </div>
+          <button onclick="saveAbout()" class="px-4 py-2 bg-teal-600 rounded-xl text-xs font-bold modern-btn">Save About</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- USER EDIT MODAL -->
+<div id="user-modal" class="fixed inset-0 z-50 bg-black/80 hidden items-center justify-center p-4">
+  <div class="glass rounded-2xl p-5 w-full max-w-lg space-y-3 max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center">
+      <h3 class="font-black" id="um-title">User</h3>
+      <button onclick="closeUserModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="um-body" class="text-sm space-y-2"></div>
+  </div>
+</div>
+
+<div id="toast-box" class="fixed top-4 right-4 z-[100] space-y-2"></div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA-6ZngcQRagHV3MEtTUoYoyfZgT8OqaF4",
+  databaseURL: "https://nazim-8c4cf-default-rtdb.firebaseio.com",
+  projectId: "nazim-8c4cf",
+  storageBucket: "nazim-8c4cf.firebasestorage.app"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Default admin credentials (change in production)
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "admin123";
+
+let allUsers = {};
+let currentEditPhone = null;
+
+function triggerToast(msg, type="success"){
+  const box = document.getElementById("toast-box");
+  const el = document.createElement("div");
+  el.className = "glass px-4 py-3 rounded-xl text-sm font-bold border " + (type==="error"?"border-rose-500 text-rose-200":"border-emerald-500 text-emerald-200");
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(()=>el.remove(), 3200);
+}
+
+function performAdminLogin(){
+  const u = document.getElementById("login-username").value.trim();
+  const p = document.getElementById("login-password").value;
+  if(u===ADMIN_USER && p===ADMIN_PASS){
+    const twoH = document.getElementById("login-2h-check").checked;
+    const exp = twoH ? Date.now()+2*60*60*1000 : Date.now()+12*60*60*1000;
+    localStorage.setItem("ph_admin_session", JSON.stringify({ok:1, exp}));
+    enterApp();
+  } else triggerToast("Invalid credentials","error");
+}
+function checkAdminLogin(){
+  try{
+    const s = JSON.parse(localStorage.getItem("ph_admin_session")||"{}");
+    if(s.ok && s.exp > Date.now()) enterApp();
+  }catch(e){}
+}
+function adminLogout(){
+  localStorage.removeItem("ph_admin_session");
+  location.reload();
+}
+function enterApp(){
+  document.getElementById("login-screen").classList.add("hidden");
+  document.getElementById("app-shell").classList.remove("hidden");
+  document.getElementById("app-shell").classList.add("flex");
+  bootListeners();
+}
+
+function openMobileSidebar(){
+  document.getElementById("sidebar").classList.remove("-translate-x-full");
+  document.getElementById("mobile-overlay").classList.remove("hidden");
+}
+function closeMobileSidebar(){
+  document.getElementById("sidebar").classList.add("-translate-x-full");
+  document.getElementById("mobile-overlay").classList.add("hidden");
+}
+
+function showSection(id){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.getElementById("section-"+id)?.classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(n=>{
+    n.classList.remove("nav-active");
+    n.classList.add("hover:bg-slate-800");
+  });
+  const nav = document.getElementById("nav-"+id);
+  if(nav){ nav.classList.add("nav-active"); nav.classList.remove("hover:bg-slate-800"); }
+  const titles = {dashboard:"Dashboard",overview:"Overview & P/L",activeplans:"Active Plans",sessions:"Sessions",users:"Users",kyc:"KYC",deposits:"Deposits",withdrawals:"Withdrawals",complaints:"Complaints",entertainment:"Entertainment",luckydraw:"Lucky Draw",plans:"Plans",settings:"Settings"};
+  document.getElementById("top-section-title").textContent = titles[id]||id;
+  closeMobileSidebar();
+  if(id==="luckydraw") loadLuckyDrawAdmin();
+  if(id==="plans") loadPlans();
+  if(id==="settings") loadSettingsForm();
+}
+
+function setBadge(id, n){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(n>0){ el.textContent = n>99?"99+":n; el.classList.remove("hidden"); }
+  else el.classList.add("hidden");
+}
+
+/* ========== MAINTENANCE (FIXED) ========== */
+function setMaintenance(on){
+  const note = document.getElementById("maintenance-note").value.trim();
+  db.ref("admin_settings/maintenance").set({
+    isEnabled: !!on,
+    enabled: !!on,
+    note: note || "Platform under maintenance. Please try again later.",
+    updatedAt: Date.now()
+  }, err=>{
+    if(err) triggerToast("Failed","error");
+    else triggerToast(on?"Maintenance ENABLED":"Maintenance DISABLED", on?"error":"success");
+  });
+}
+function saveMaintenanceNote(){
+  const note = document.getElementById("maintenance-note").value.trim();
+  db.ref("admin_settings/maintenance").update({ note, updatedAt: Date.now() });
+  triggerToast("Note saved");
+}
+function streamMaintenance(){
+  db.ref("admin_settings/maintenance").on("value", snap=>{
+    const v = snap.val()||{};
+    const on = !!(v.isEnabled || v.enabled);
+    document.getElementById("maint-status-text").textContent = "Status: " + (on?"ON":"OFF") + (v.note?" · "+v.note:"");
+    document.getElementById("maint-top-flag").classList.toggle("hidden", !on);
+    if(v.note) document.getElementById("maintenance-note").value = v.note;
+  });
+}
+
+/* ========== USERS ========== */
+function bootListeners(){
+  streamMaintenance();
+  db.ref("users").on("value", snap=>{
+    allUsers = snap.val()||{};
+    document.getElementById("stat-users").textContent = Object.keys(allUsers).length;
+    renderUsers();
+  });
+  db.ref("admin_queues/kyc_requests").on("value", snap=>{
+    const rows = [];
+    if(snap.exists()) snap.forEach(c=>rows.push({id:c.key, ...c.val()}));
+    const pending = rows.filter(r=>String(r.status||"pending").toLowerCase()==="pending");
+    setBadge("badge-kyc", pending.length);
+    document.getElementById("stat-kyc").textContent = pending.length;
+    renderKyc(rows);
+  });
+  db.ref("admin_queues/deposits").on("value", snap=>{
+    const rows = [];
+    if(snap.exists()) snap.forEach(c=>rows.push({id:c.key, ...c.val()}));
+    rows.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    const pending = rows.filter(r=>/pending/i.test(String(r.status||"")));
+    setBadge("badge-deposits", pending.length);
+    document.getElementById("stat-dep").textContent = pending.length;
+    renderDeposits(rows);
+  });
+  db.ref("admin_queues/withdrawals").on("value", snap=>{
+    const rows = [];
+    if(snap.exists()) snap.forEach(c=>rows.push({id:c.key, ...c.val()}));
+    rows.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    const pending = rows.filter(r=>/pending/i.test(String(r.status||"")));
+    setBadge("badge-withdrawals", pending.length);
+    document.getElementById("stat-wd").textContent = pending.length;
+    renderWithdrawals(rows);
+  });
+  db.ref("admin_queues/complaints").on("value", snap=>{
+    const rows = [];
+    if(snap.exists()) snap.forEach(c=>rows.push({id:c.key, ...c.val()}));
+    rows.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    const open = rows.filter(r=>!/resolved|closed/i.test(String(r.status||"Open")));
+    setBadge("badge-complaints", open.length);
+    renderComplaints(rows);
+  });
+}
+
+function renderUsers(){
+  const q = (document.getElementById("user-search").value||"").toLowerCase();
+  const box = document.getElementById("users-list");
+  const keys = Object.keys(allUsers).filter(ph=>{
+    const u = allUsers[ph]||{};
+    return !q || ph.includes(q) || (u.username||"").toLowerCase().includes(q) || (u.email||"").toLowerCase().includes(q);
+  }).slice(0, 200);
+  if(!keys.length){ box.innerHTML = '<div class="text-slate-500 text-sm py-8 text-center">No users</div>'; return; }
+  box.innerHTML = keys.map(ph=>{
+    const u = allUsers[ph]||{};
+    const banned = u.banned||u.isBanned||u.status==="banned";
+    const kyc = u.kycStatus||"unverified";
+    return `<div class="glass rounded-2xl p-4 flex flex-wrap gap-3 items-center justify-between">
+      <div class="min-w-0">
+        <div class="font-extrabold truncate">${esc(u.username||"User")} ${banned?'<span class="text-[10px] bg-rose-600 px-2 py-0.5 rounded-lg ml-1">BANNED</span>':''}</div>
+        <div class="text-xs text-cyan-400 font-mono">${esc(ph)}</div>
+        <div class="text-[10px] text-slate-400">Bal Rs.${Number(u.balance||0).toFixed(0)} · KYC ${esc(kyc)} · Limit Rs.${Number(u.withdrawalLimit||0)}</div>
+      </div>
+      <div class="flex flex-wrap gap-1.5">
+        <button onclick="openUserModal('${ph}')" class="px-3 py-1.5 bg-slate-700 rounded-lg text-[10px] font-bold">Manage</button>
+        <button onclick="toggleBan('${ph}')" class="px-3 py-1.5 ${banned?'bg-emerald-700':'bg-rose-700'} rounded-lg text-[10px] font-bold">${banned?'Unban':'Ban'}</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function openUserModal(phone){
+  currentEditPhone = phone;
+  const u = allUsers[phone]||{};
+  document.getElementById("um-title").textContent = (u.username||phone);
+  document.getElementById("um-body").innerHTML = `
+    <div class="grid grid-cols-2 gap-2 text-xs">
+      <div class="text-slate-400">Phone</div><div class="font-mono">${esc(phone)}</div>
+      <div class="text-slate-400">Email</div><div>${esc(u.email||"—")}</div>
+      <div class="text-slate-400">Password</div><div class="font-mono">${esc(u.password||"—")}</div>
+      <div class="text-slate-400">PIN</div><div class="font-mono">${esc(u.withdrawPin||"Not set")}</div>
+      <div class="text-slate-400">KYC</div><div>${esc(u.kycStatus||"—")}</div>
+      <div class="text-slate-400">CNIC4</div><div class="font-mono">${esc(u.kycDetails?.cnicLast4||"—")}</div>
+      <div class="text-slate-400">DOB</div><div>${esc(u.dob||u.kycDetails?.birthday||"—")}</div>
+      <div class="text-slate-400">Invite slots</div><div>${u.inviteWithdrawSlots??0}</div>
+    </div>
+    <div class="border-t border-slate-700 pt-3 space-y-2">
+      <label class="text-[10px] text-slate-400 font-bold">Adjust Balance</label>
+      <div class="flex gap-2">
+        <input id="um-bal" type="number" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2" placeholder="New balance" value="${Number(u.balance||0)}">
+        <button onclick="saveUserBalance()" class="px-3 py-2 bg-cyan-600 rounded-xl text-xs font-bold">Set</button>
+      </div>
+      <label class="text-[10px] text-slate-400 font-bold">Withdraw Limit</label>
+      <div class="flex gap-2">
+        <input id="um-limit" type="number" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2" value="${Number(u.withdrawalLimit||1000)}">
+        <button onclick="saveUserLimit()" class="px-3 py-2 bg-emerald-600 rounded-xl text-xs font-bold">Set</button>
+      </div>
+      <label class="text-[10px] text-slate-400 font-bold">Add Invite Withdraw Slots</label>
+      <div class="flex gap-2">
+        <input id="um-slots" type="number" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2" value="1">
+        <button onclick="addInviteSlots()" class="px-3 py-2 bg-amber-600 rounded-xl text-xs font-bold">Add</button>
+      </div>
+      <button onclick="downloadUserPDF('${phone}')" class="w-full py-2 bg-slate-700 rounded-xl text-xs font-bold">Download PDF Report</button>
+    </div>`;
+  const m = document.getElementById("user-modal");
+  m.classList.remove("hidden"); m.classList.add("flex");
+}
+function closeUserModal(){ document.getElementById("user-modal").classList.add("hidden"); document.getElementById("user-modal").classList.remove("flex"); }
+function saveUserBalance(){
+  const v = parseFloat(document.getElementById("um-bal").value);
+  if(isNaN(v)) return;
+  db.ref("users/"+currentEditPhone+"/balance").set(v);
+  triggerToast("Balance updated");
+}
+function saveUserLimit(){
+  const v = parseFloat(document.getElementById("um-limit").value);
+  if(isNaN(v)) return;
+  db.ref("users/"+currentEditPhone+"/withdrawalLimit").set(v);
+  triggerToast("Limit updated");
+}
+function addInviteSlots(){
+  const add = parseInt(document.getElementById("um-slots").value)||0;
+  db.ref("users/"+currentEditPhone).transaction(u=>{
+    if(!u) return;
+    u.inviteWithdrawSlots = (parseInt(u.inviteWithdrawSlots||0)||0) + add;
+    return u;
+  });
+  triggerToast("Slots added");
+}
+function toggleBan(phone){
+  const u = allUsers[phone]||{};
+  const banned = !(u.banned||u.isBanned||u.status==="banned");
+  db.ref("users/"+phone).update({ banned, isBanned: banned, status: banned?"banned":"active" });
+  triggerToast(banned?"User banned":"User unbanned", banned?"error":"success");
+}
+
+/* ========== KYC ========== */
+function renderKyc(rows){
+  const box = document.getElementById("kyc-list");
+  const pending = rows.filter(r=>String(r.status||"pending").toLowerCase()==="pending");
+  const rest = rows.filter(r=>String(r.status||"").toLowerCase()!=="pending").slice(0,30);
+  const list = pending.concat(rest);
+  if(!list.length){ box.innerHTML = '<div class="text-slate-500 text-sm py-8 text-center">No KYC requests</div>'; return; }
+  box.innerHTML = list.map(r=>{
+    const st = String(r.status||"pending");
+    return `<div class="glass rounded-2xl p-4 space-y-2">
+      <div class="flex justify-between gap-2">
+        <div>
+          <div class="font-extrabold">${esc(r.fullName||r.username||"—")}</div>
+          <div class="text-xs text-cyan-400 font-mono">${esc(r.phone||r.id)}</div>
+        </div>
+        <span class="text-[10px] font-bold uppercase ${st==="pending"?"text-amber-400":st==="approved"||st==="verified"?"text-emerald-400":"text-slate-400"}">${esc(st)}</span>
+      </div>
+      <div class="text-xs text-slate-400 grid grid-cols-2 gap-1">
+        <div>DOB: <b class="text-white">${esc(r.birthday||"—")}</b></div>
+        <div>CNIC last4: <b class="text-white font-mono">${esc(r.cnicLast4||"—")}</b></div>
+      </div>
+      ${st==="pending"?`<div class="flex gap-2 pt-1">
+        <button onclick="approveKyc('${r.phone||r.id}')" class="flex-1 py-2 bg-emerald-600 rounded-xl text-xs font-bold">Approve</button>
+        <button onclick="rejectKyc('${r.phone||r.id}')" class="flex-1 py-2 bg-rose-700 rounded-xl text-xs font-bold">Reject</button>
+      </div>`:""}
+    </div>`;
+  }).join("");
+}
+function approveKyc(phone){
+  db.ref("users/"+phone).update({ kycStatus:"verified", verificationStatus:"verified" });
+  db.ref("admin_queues/kyc_requests/"+phone).update({ status:"approved", approvedAt:Date.now() });
+  triggerToast("KYC approved");
+}
+function rejectKyc(phone){
+  db.ref("users/"+phone).update({ kycStatus:"rejected" });
+  db.ref("admin_queues/kyc_requests/"+phone).update({ status:"rejected", rejectedAt:Date.now() });
+  triggerToast("KYC rejected","error");
+}
+
+/* ========== DEPOSITS ========== */
+function renderDeposits(rows){
+  const box = document.getElementById("deposits-list");
+  if(!rows.length){ box.innerHTML = '<div class="text-slate-500 text-sm py-8 text-center">No deposits</div>'; return; }
+  box.innerHTML = rows.slice(0,80).map(d=>{
+    const pending = /pending/i.test(String(d.status||""));
+    const isBin = /binance|crypto/i.test(String(d.channel||d.gateway||d.method||""));
+    return `<div class="glass rounded-2xl p-4 ${isBin?"border border-amber-500/30":""}">
+      <div class="flex justify-between gap-2">
+        <div>
+          <div class="font-extrabold">${esc(d.username||d.userPhone)} ${isBin?'<span class="binance-badge">BINANCE</span>':''}</div>
+          <div class="text-xs text-slate-400 font-mono">${esc(d.userPhone)} · ${esc(d.channel||d.gateway||"")}</div>
+          <div class="text-sm font-black text-emerald-400 mt-1">Rs. ${Number(d.amount||0).toLocaleString()}</div>
+          <div class="text-[10px] text-slate-500">TRX: ${esc(d.trxId||"—")} · ${new Date(d.timestamp||0).toLocaleString()}</div>
+          ${d.taxAmt?`<div class="text-[10px] text-amber-400">Tax: Rs.${Number(d.taxAmt).toFixed(2)}</div>`:""}
+          ${d.proofUrl?`<a href="${esc(d.proofUrl)}" target="_blank" class="text-[10px] text-cyan-400 underline">View proof</a>`:""}
+        </div>
+        <span class="text-[10px] font-bold uppercase">${esc(d.status||"")}</span>
+      </div>
+      ${pending?`<div class="flex gap-2 mt-3">
+        <button onclick="approveDeposit('${d.id}')" class="flex-1 py-2 bg-emerald-600 rounded-xl text-xs font-bold">Approve</button>
+        <button onclick="rejectDeposit('${d.id}')" class="flex-1 py-2 bg-rose-700 rounded-xl text-xs font-bold">Reject</button>
+      </div>`:""}
+    </div>`;
+  }).join("");
+}
+function approveDeposit(id){
+  db.ref("admin_queues/deposits/"+id).once("value", snap=>{
+    if(!snap.exists()) return;
+    const d = snap.val();
+    const phone = d.userPhone;
+    let credit = Number(d.amount||0);
+    if(d.taxAmt) credit = Math.max(0, credit - Number(d.taxAmt));
+    else if(d.taxPercent) credit = credit * (1 - Number(d.taxPercent)/100);
+    db.ref("users/"+phone).transaction(u=>{
+      if(!u) return;
+      u.balance = Number(u.balance||0) + credit;
+      u.totalDeposit = Number(u.totalDeposit||0) + Number(d.amount||0);
+      if(!u.logs) u.logs = {};
+      if(u.logs[id]) u.logs[id].status = "Approved";
+      else u.logs[id] = { id, type:"deposit", title:"Deposit approved", amount:credit, timestamp:Date.now(), status:"Approved" };
+      return u;
+    });
+    db.ref("admin_queues/deposits/"+id).update({ status:"Approved", approvedAt:Date.now(), credited:credit });
+    db.ref("public_feed/PF-DEP-"+id).set({ type:"deposit", username:(d.username||"User").toString().slice(0,12), amount:d.amount, ts:Date.now() });
+    triggerToast("Deposit approved · credited Rs."+credit.toFixed(0));
+  });
+}
+function rejectDeposit(id){
+  db.ref("admin_queues/deposits/"+id).once("value", snap=>{
+    if(!snap.exists()) return;
+    const d = snap.val();
+    db.ref("admin_queues/deposits/"+id).update({ status:"Rejected", rejectedAt:Date.now() });
+    if(d.userPhone) db.ref("users/"+d.userPhone+"/logs/"+id+"/status").set("Rejected");
+    triggerToast("Deposit rejected","error");
+  });
+}
+
+/* ========== WITHDRAWALS ========== */
+function renderWithdrawals(rows){
+  const box = document.getElementById("withdrawals-list");
+  if(!rows.length){ box.innerHTML = '<div class="text-slate-500 text-sm py-8 text-center">No withdrawals</div>'; return; }
+  box.innerHTML = rows.slice(0,80).map(w=>{
+    const pending = /pending/i.test(String(w.status||""));
+    return `<div class="glass rounded-2xl p-4">
+      <div class="flex justify-between gap-2">
+        <div>
+          <div class="font-extrabold">${esc(w.username||w.userPhone)}</div>
+          <div class="text-xs text-slate-400 font-mono">${esc(w.userPhone)}</div>
+          <div class="text-sm font-black text-purple-300 mt-1">Rs. ${Number(w.amount||0).toLocaleString()}</div>
+          <div class="text-[10px] text-slate-500">${esc(w.method||"")} · ${esc(w.accountTitle||"")} · ${esc(w.accountNumber||"")}</div>
+          <div class="text-[10px] text-slate-500">${new Date(w.timestamp||0).toLocaleString()}</div>
+        </div>
+        <span class="text-[10px] font-bold uppercase">${esc(w.status||"")}</span>
+      </div>
+      ${pending?`<div class="mt-2">
+        <input id="trx-${w.id}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs mb-2" placeholder="Admin TRX ID (optional)">
+        <div class="flex gap-2">
+          <button onclick="approveWithdraw('${w.id}')" class="flex-1 py-2 bg-emerald-600 rounded-xl text-xs font-bold">Approve</button>
+          <button onclick="rejectWithdraw('${w.id}')" class="flex-1 py-2 bg-rose-700 rounded-xl text-xs font-bold">Reject</button>
+        </div>
+      </div>`:""}
+    </div>`;
+  }).join("");
+}
+function approveWithdraw(id){
+  const trx = document.getElementById("trx-"+id)?.value?.trim()||id;
+  db.ref("admin_queues/withdrawals/"+id).once("value", snap=>{
+    if(!snap.exists()) return;
+    const w = snap.val();
+    db.ref("admin_queues/withdrawals/"+id).update({ status:"Approved", adminTrx:trx, approvedAt:Date.now() });
+    if(w.userPhone){
+      db.ref("users/"+w.userPhone+"/logs/"+id).update({ status:"Approved", trxId:trx, adminTrx:trx });
+    }
+    db.ref("public_feed/PF-WD-"+id).set({ type:"withdraw", username:(w.username||"User").toString().slice(0,12), amount:w.amount, ts:Date.now() });
+    triggerToast("Withdraw approved");
+  });
+}
+function rejectWithdraw(id){
+  db.ref("admin_queues/withdrawals/"+id).once("value", snap=>{
+    if(!snap.exists()) return;
+    const w = snap.val();
+    // refund balance
+    const phone = w.userPhone;
+    const amount = Number(w.amount||0);
+    const tax = Number(w.tax||0);
+    db.ref("users/"+phone).transaction(u=>{
+      if(!u) return;
+      u.balance = Number(u.balance||0) + amount + tax;
+      if(u.logs && u.logs[id]) u.logs[id].status = "Rejected";
+      return u;
+    });
+    db.ref("admin_queues/withdrawals/"+id).update({ status:"Rejected", rejectedAt:Date.now() });
+    triggerToast("Withdraw rejected · refunded","error");
+  });
+}
+
+/* ========== COMPLAINTS ========== */
+function renderComplaints(rows){
+  const box = document.getElementById("complaints-list");
+  if(!rows.length){ box.innerHTML = '<div class="text-slate-500 text-sm py-8 text-center">No complaints</div>'; return; }
+  box.innerHTML = rows.slice(0,50).map(c=>`
+    <div class="glass rounded-2xl p-4 space-y-2">
+      <div class="flex justify-between"><div class="font-extrabold">${esc(c.subject)}</div><span class="text-[10px] font-bold ${/resolved/i.test(c.status||"")?"text-emerald-400":"text-amber-400"}">${esc(c.status||"Open")}</span></div>
+      <div class="text-xs text-slate-400">${esc(c.category)} · ${esc(c.username||c.phone)} · ${new Date(c.timestamp||0).toLocaleString()}</div>
+      <div class="text-sm text-slate-300">${esc(c.body||"")}</div>
+      ${c.imageUrl?`<a class="text-xs text-cyan-400" href="${esc(c.imageUrl)}" target="_blank">Attachment</a>`:""}
+      <div class="flex gap-2">
+        <button onclick="resolveComplaint('${c.id}','${esc(c.phone||"")}')" class="px-3 py-1.5 bg-emerald-600 rounded-lg text-[10px] font-bold">Resolve</button>
+        <button onclick="db.ref('admin_queues/complaints/${c.id}').remove()" class="px-3 py-1.5 bg-rose-700 rounded-lg text-[10px] font-bold">Delete</button>
+      </div>
+    </div>`).join("");
+}
+function resolveComplaint(id, phone){
+  db.ref("admin_queues/complaints/"+id).update({ status:"Resolved", resolvedAt:Date.now() });
+  if(phone) db.ref("users/"+phone+"/complaints/"+id+"/status").set("Resolved");
+  triggerToast("Resolved");
+}
+
+/* ========== LUCKY DRAW ADMIN ========== */
+function loadLuckyDrawAdmin(){
+  const box = document.getElementById("ld-admin-list");
+  box.innerHTML = '<div class="text-slate-500 text-sm">Loading…</div>';
+  db.ref("lucky_draws").once("value", snap=>{
+    if(!snap.exists()){ box.innerHTML = '<div class="text-slate-500 text-sm py-6 text-center">No draws yet (auto-created when users join)</div>'; return; }
+    const rows = [];
+    snap.forEach(c=>rows.push({id:c.key, ...c.val()}));
+    rows.sort((a,b)=>(b.config?.start||0)-(a.config?.start||0));
+    box.innerHTML = rows.map(d=>{
+      const parts = Object.keys(d.participants||{});
+      const cfg = d.config||{};
+      return `<div class="glass rounded-2xl p-4">
+        <div class="font-extrabold">${esc(d.id)}</div>
+        <div class="text-xs text-slate-400">Status: <b class="text-white">${esc(d.status||"open")}</b> · Seats ${parts.length}/${cfg.max||"—"} · Entry Rs.${cfg.entry||"—"}</div>
+        <div class="text-[10px] text-slate-500 mt-1">${parts.map(p=>esc((d.participants[p]||{}).username||p)).join(", ")||"No participants"}</div>
+        ${d.winners?`<div class="text-xs text-fuchsia-300 mt-1">Winners: ${JSON.stringify(d.winners)}</div>`:""}
+      </div>`;
+    }).join("");
+  });
+}
+
+/* ========== PLANS ========== */
+function loadPlans(){
+  const box = document.getElementById("plans-list");
+  db.ref("investment_plans").on("value", snap=>{
+    box.innerHTML = "";
+    if(!snap.exists()){ box.innerHTML = '<div class="text-slate-500 text-sm py-6 text-center">No plans</div>'; return; }
+    snap.forEach(c=>{
+      const p = c.val();
+      const div = document.createElement("div");
+      div.className = "glass rounded-2xl p-4 flex justify-between items-center gap-2";
+      div.innerHTML = `<div><div class="font-extrabold">${esc(p.name)}</div><div class="text-xs text-slate-400">Rs.${p.cost} · ${p.days}d · ${p.percentage}% daily</div></div>
+        <button onclick="db.ref('investment_plans/${c.key}').remove()" class="text-rose-400 text-xs font-bold">Delete</button>`;
+      box.appendChild(div);
+    });
+  });
+}
+function showAddPlanModal(){
+  const n = prompt("Plan name"); if(!n) return;
+  const c = prompt("Cost Rs"); if(!c) return;
+  const d = prompt("Days"); if(!d) return;
+  const p = prompt("Daily %"); if(!p) return;
+  db.ref("investment_plans/PLAN-"+Date.now()).set({ name:n, cost:parseFloat(c), days:parseInt(d), percentage:parseFloat(p) });
+  triggerToast("Plan added");
+}
+
+/* ========== SETTINGS ========== */
+function loadSettingsForm(){
+  db.ref("admin_settings").once("value", snap=>{
+    const s = snap.val()||{};
+    document.getElementById("set-dollar").value = s.dollar_rate||278;
+    document.getElementById("set-coin-rate").value = s.coin_rate||s.coins_per_rupee||50;
+    document.getElementById("set-wd-limit").value = s.default_withdraw_limit||1000;
+    if(s.about_us?.text) document.getElementById("about-text").value = s.about_us.text;
+    if(s.popup_announcement){
+      document.getElementById("popup-title").value = s.popup_announcement.title||"";
+      document.getElementById("popup-desc").value = s.popup_announcement.description||"";
+    }
+    if(s.play_games) document.getElementById("set-play-games").value = JSON.stringify(s.play_games, null, 2);
+  });
+  // support both deposit_accounts and deposit_gateway
+  db.ref("admin_settings/deposit_accounts").once("value", snap=>{
+    const d = snap.val()||{};
+    fillDepForm(d);
+  });
+  db.ref("admin_settings/deposit_gateway").once("value", snap=>{
+    if(snap.exists()) fillDepForm(snap.val());
+  });
+}
+function fillDepForm(d){
+  if(d.JazzCash){ document.getElementById("dep-jazz-title").value = d.JazzCash.title||""; document.getElementById("dep-jazz-acc").value = d.JazzCash.account||""; }
+  if(d.EasyPaisa){ document.getElementById("dep-easy-title").value = d.EasyPaisa.title||""; document.getElementById("dep-easy-acc").value = d.EasyPaisa.account||""; }
+  if(d.CustomBank||d.Bank){ const b=d.CustomBank||d.Bank; document.getElementById("dep-bank-title").value = b.title||""; document.getElementById("dep-bank-acc").value = b.account||""; }
+  if(d.Binance){ document.getElementById("dep-binance-title").value = d.Binance.title||""; document.getElementById("dep-binance-acc").value = d.Binance.account||d.Binance.uid||""; document.getElementById("dep-binance-tax").value = d.Binance.taxPercent??1; }
+}
+function saveDepositAccounts(){
+  const data = {
+    JazzCash: { title: val("dep-jazz-title"), account: val("dep-jazz-acc"), bank:"JazzCash" },
+    EasyPaisa: { title: val("dep-easy-title"), account: val("dep-easy-acc"), bank:"EasyPaisa" },
+    CustomBank: { title: val("dep-bank-title"), account: val("dep-bank-acc"), bank:"Bank Transfer" },
+    Binance: { title: val("dep-binance-title"), account: val("dep-binance-acc"), bank:"Binance USDT", taxPercent: parseFloat(val("dep-binance-tax"))||1 }
+  };
+  db.ref("admin_settings/deposit_accounts").set(data);
+  db.ref("admin_settings/deposit_gateway").set(data);
+  db.ref("admin_settings/crypto_tax_percent").set(data.Binance.taxPercent);
+  triggerToast("Deposit accounts saved");
+}
+function saveRates(){
+  const dollar = parseFloat(val("set-dollar"))||278;
+  const coin = parseFloat(val("set-coin-rate"))||50;
+  const limit = parseFloat(val("set-wd-limit"))||1000;
+  db.ref("admin_settings").update({
+    dollar_rate: dollar,
+    coin_rate: coin,
+    coins_per_rupee: coin,
+    default_withdraw_limit: limit
+  });
+  triggerToast("Rates saved");
+}
+function savePlayGames(){
+  let data;
+  try{ data = JSON.parse(document.getElementById("set-play-games").value||"[]"); }
+  catch(e){ triggerToast("Invalid JSON","error"); return; }
+  db.ref("admin_settings/play_games").set(data);
+  triggerToast("Games saved");
+}
+function savePopup(active){
+  db.ref("admin_settings/popup_announcement").set({
+    active: !!active,
+    title: val("popup-title"),
+    description: val("popup-desc"),
+    imageUrl: ""
+  });
+  triggerToast(active?"Popup ON":"Popup OFF");
+}
+function saveAbout(){
+  db.ref("admin_settings/about_us").set({ text: document.getElementById("about-text").value });
+  triggerToast("About saved");
+}
+function val(id){ return document.getElementById(id).value.trim(); }
+function esc(s){ return String(s??"").replace(/[<>&"'`]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;","'":"&#39;","`":"&#96;"}[c])); }
+
+function downloadUserPDF(phone){
+  const user = allUsers[phone]||{};
+  const element = document.createElement("div");
+  element.style.padding = "24px";
+  element.style.fontFamily = "Inter,sans-serif";
+  element.innerHTML = `<h1>PRIME HORIZON User Report</h1>
+    <p>${new Date().toLocaleString()}</p>
+    <p><b>Phone:</b> ${esc(phone)}</p>
+    <p><b>Username:</b> ${esc(user.username)}</p>
+    <p><b>Email:</b> ${esc(user.email)}</p>
+    <p><b>Balance:</b> Rs.${Number(user.balance||0)}</p>
+    <p><b>KYC:</b> ${esc(user.kycStatus)}</p>
+    <p><b>CNIC4:</b> ${esc(user.kycDetails?.cnicLast4)}</p>
+    <p><b>Limit:</b> ${user.withdrawalLimit}</p>`;
+  html2pdf().from(element).save("PH-"+phone+".pdf");
+}
+
+
+/* ===== ADMIN v6.1 EXTENDED ===== */
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dhib5t6me/image/upload";
+const CLOUDINARY_PRESET = "Naeeem";
+let lastAlert = null;
+let totalsCache = { dep:0, wd:0 };
+
+async function cloudUpload(file, statusEl){
+  if(statusEl) statusEl.textContent = "Uploading…";
+  const fd = new FormData(); fd.append("file", file); fd.append("upload_preset", CLOUDINARY_PRESET);
+  try{
+    const res = await fetch(CLOUDINARY_URL, { method:"POST", body:fd });
+    const data = await res.json();
+    if(statusEl) statusEl.textContent = data.secure_url ? "Uploaded ✓" : "Failed";
+    return data.secure_url || null;
+  }catch(e){ if(statusEl) statusEl.textContent = "Failed"; return null; }
+}
+async function uploadPopupImage(e){
+  const f = e.target.files?.[0]; if(!f) return;
+  const url = await cloudUpload(f, document.getElementById("popup-image-status"));
+  if(url){
+    document.getElementById("popup-image-url").value = url;
+    const img = document.getElementById("popup-image-preview");
+    img.src = url; img.classList.remove("hidden");
+  }
+}
+async function uploadAboutImage(e){
+  const f = e.target.files?.[0]; if(!f) return;
+  const url = await cloudUpload(f, document.getElementById("about-image-status"));
+  if(url){
+    document.getElementById("about-image-url").value = url;
+    const img = document.getElementById("about-image-preview");
+    img.src = url; img.classList.remove("hidden");
+  }
+}
+
+const _savePopup = savePopup;
+savePopup = function(active){
+  db.ref("admin_settings/popup_announcement").set({
+    active: !!active,
+    title: val("popup-title"),
+    description: val("popup-desc"),
+    link: val("popup-link"),
+    imageUrl: document.getElementById("popup-image-url").value || "",
+    image: document.getElementById("popup-image-url").value || ""
+  });
+  triggerToast(active ? "Popup ON" : "Popup OFF");
+};
+
+const _saveAbout = saveAbout;
+saveAbout = function(){
+  db.ref("admin_settings/about_us").set({
+    text: document.getElementById("about-text").value,
+    image: document.getElementById("about-image-url").value || "",
+    imageUrl: document.getElementById("about-image-url").value || ""
+  });
+  triggerToast("About saved");
+};
+
+const _saveGames = savePlayGames;
+savePlayGames = function(){
+  const raw = document.getElementById("set-play-games").value.trim();
+  let data = [];
+  if(raw.startsWith("[")){
+    try{ data = JSON.parse(raw); }catch(e){ triggerToast("Invalid JSON","error"); return; }
+  } else {
+    data = raw.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{
+      const parts = l.split("|").map(x=>x.trim());
+      return { title: parts[0]||"Game", url: parts[1]||parts[0] };
+    });
+  }
+  db.ref("admin_settings/play_games").set(data);
+  triggerToast("Games saved");
+};
+
+const _loadSettings = loadSettingsForm;
+loadSettingsForm = function(){
+  _loadSettings();
+  db.ref("admin_settings").once("value", snap=>{
+    const s = snap.val()||{};
+    if(s.popup_announcement){
+      document.getElementById("popup-link").value = s.popup_announcement.link||"";
+      const iu = s.popup_announcement.imageUrl||s.popup_announcement.image||"";
+      if(iu){ document.getElementById("popup-image-url").value=iu; const im=document.getElementById("popup-image-preview"); im.src=iu; im.classList.remove("hidden"); }
+    }
+    if(s.about_us){
+      const iu = s.about_us.imageUrl||s.about_us.image||"";
+      if(iu){ document.getElementById("about-image-url").value=iu; const im=document.getElementById("about-image-preview"); im.src=iu; im.classList.remove("hidden"); }
+    }
+    if(s.play_games){
+      const pg = s.play_games;
+      if(Array.isArray(pg)) document.getElementById("set-play-games").value = pg.map(g=>(g.title||"Game")+" | "+(g.url||g.link||"")).join("\n");
+    }
+  });
+};
+
+/* Overview P/L */
+function computeUserPL(u){
+  const dep = Number(u.totalDeposit||0);
+  const wd = Number(u.totalWithdraw||0);
+  const profit = Number(u.totalProfit||0);
+  // platform view: deposits in, withdraws out; user profit is liability-ish
+  const net = dep - wd; // platform net cash
+  return { dep, wd, profit, net, loss: Math.max(0, wd - dep) };
+}
+function renderOverview(){
+  const box = document.getElementById("overview-list");
+  if(!box) return;
+  const rows = Object.keys(allUsers).map(ph=>{
+    const u = allUsers[ph]||{};
+    const pl = computeUserPL(u);
+    return { ph, u, pl };
+  }).sort((a,b)=>b.pl.dep-a.pl.dep);
+  let tDep=0,tWd=0,tProfit=0;
+  rows.forEach(r=>{ tDep+=r.pl.dep; tWd+=r.pl.wd; tProfit+=r.pl.profit; });
+  const net = tDep - tWd;
+  document.getElementById("stat-total-dep").textContent = "Rs. "+tDep.toLocaleString();
+  document.getElementById("stat-total-wd").textContent = "Rs. "+tWd.toLocaleString();
+  document.getElementById("stat-profit").textContent = "Rs. "+tProfit.toLocaleString();
+  document.getElementById("stat-net").textContent = "Rs. "+net.toLocaleString();
+  document.getElementById("stat-net").className = "text-xl font-black "+(net>=0?"text-emerald-400":"text-rose-400");
+  totalsCache = { dep:tDep, wd:tWd };
+  box.innerHTML = rows.slice(0,300).map(({ph,u,pl})=>`
+    <div class="glass rounded-2xl p-3 flex flex-wrap justify-between gap-2 items-center text-sm">
+      <div>
+        <div class="font-bold">${esc(u.username||"User")} <span class="text-[10px] font-mono text-cyan-400">${esc(ph)}</span></div>
+        <div class="text-[10px] text-slate-400">Invited by: ${esc(u.referredByPhone&&u.referredByPhone!=="NONE"?u.referredByPhone:"—")}</div>
+      </div>
+      <div class="text-[11px] grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-right">
+        <div>Dep <b class="text-emerald-400">Rs.${pl.dep.toLocaleString()}</b></div>
+        <div>WD <b class="text-purple-300">Rs.${pl.wd.toLocaleString()}</b></div>
+        <div>Profit <b class="text-amber-300">Rs.${pl.profit.toLocaleString()}</b></div>
+        <div>Net <b class="${pl.net>=0?"text-emerald-400":"text-rose-400"}">Rs.${pl.net.toLocaleString()}</b></div>
+      </div>
+    </div>`).join("") || '<div class="text-slate-500 text-center py-6">No data</div>';
+}
+
+function renderActivePlans(){
+  const box = document.getElementById("activeplans-list");
+  if(!box) return;
+  const rows = [];
+  Object.keys(allUsers).forEach(ph=>{
+    const u = allUsers[ph]||{};
+    if(u.activePlan) rows.push({ ph, u, p:u.activePlan });
+  });
+  if(!rows.length){ box.innerHTML = '<div class="text-slate-500 text-center py-6">No active plans</div>'; return; }
+  box.innerHTML = rows.map(({ph,u,p})=>`
+    <div class="glass rounded-2xl p-4 flex flex-wrap justify-between gap-2 items-center">
+      <div>
+        <div class="font-extrabold">${esc(u.username||ph)}</div>
+        <div class="text-xs text-slate-400 font-mono">${esc(ph)}</div>
+        <div class="text-sm text-emerald-300 mt-1">${esc(p.name)} · Cost Rs.${p.cost} · ${p.daysRemaining}/${p.totalDays} days · ${p.percentage}%</div>
+      </div>
+      <button onclick="deactivatePlan('${ph}')" class="px-4 py-2 bg-rose-700 rounded-xl text-xs font-bold">Deactivate</button>
+    </div>`).join("");
+}
+function deactivatePlan(phone){
+  if(!confirm("Deactivate this user's plan?")) return;
+  db.ref("users/"+phone+"/activePlan").remove();
+  const id = "LOG-DEACT-"+Date.now();
+  db.ref("users/"+phone+"/logs/"+id).set({ id, type:"invest", title:"Plan deactivated by admin", timestamp:Date.now(), status:"Admin" });
+  triggerToast("Plan deactivated");
+}
+
+function renderAllSessions(){
+  const box = document.getElementById("sessions-list");
+  if(!box) return;
+  const q = (document.getElementById("session-search")?.value||"").toLowerCase();
+  const cards = [];
+  Object.keys(allUsers).forEach(ph=>{
+    if(q && !ph.includes(q)) return;
+    const u = allUsers[ph]||{};
+    const sessions = u.sessions || {};
+    const keys = Object.keys(sessions);
+    if(!keys.length) return;
+    keys.forEach(sid=>{
+      const s = sessions[sid]||{};
+      cards.push({ ph, username:u.username, sid, s });
+    });
+  });
+  if(!cards.length){ box.innerHTML = '<div class="text-slate-500 text-center py-6">No active sessions recorded</div>'; return; }
+  box.innerHTML = cards.map(({ph,username,sid,s})=>`
+    <div class="glass rounded-2xl p-3 flex flex-wrap justify-between gap-2 items-center">
+      <div class="text-sm">
+        <div class="font-bold">${esc(username||ph)} <span class="text-[10px] font-mono text-cyan-400">${esc(ph)}</span></div>
+        <div class="text-[10px] text-slate-400">${esc(s.device||"Device")} · ${esc(s.location||s.city||"Unknown location")}</div>
+        <div class="text-[10px] text-slate-500">${s.trusted?'Trusted · ':''}${new Date(s.lastActive||s.ts||0).toLocaleString()}</div>
+      </div>
+      <button onclick="forceLogoutSession('${ph}','${sid}')" class="px-3 py-1.5 bg-rose-700 rounded-lg text-[10px] font-bold">Force Logout</button>
+    </div>`).join("");
+}
+function forceLogoutSession(phone, sid){
+  db.ref("users/"+phone+"/sessions/"+sid).remove();
+  db.ref("users/"+phone+"/sessions/"+sid+"_kill").set({ kill:true, ts:Date.now() });
+  triggerToast("Session logged out");
+}
+
+/* Complaint reply */
+const _renderComplaints = renderComplaints;
+renderComplaints = function(rows){
+  const box = document.getElementById("complaints-list");
+  if(!rows.length){ box.innerHTML = '<div class="text-slate-500 text-sm py-8 text-center">No complaints</div>'; return; }
+  box.innerHTML = rows.slice(0,50).map(c=>`
+    <div class="glass rounded-2xl p-4 space-y-2">
+      <div class="flex justify-between"><div class="font-extrabold">${esc(c.subject)}</div><span class="text-[10px] font-bold ${/resolved/i.test(c.status||"")?"text-emerald-400":"text-amber-400"}">${esc(c.status||"Open")}</span></div>
+      <div class="text-xs text-slate-400">${esc(c.category)} · ${esc(c.username||c.phone)} · ${new Date(c.timestamp||0).toLocaleString()}</div>
+      <div class="text-sm text-slate-300">${esc(c.body||"")}</div>
+      ${c.adminReply?`<div class="text-xs bg-slate-900/80 rounded-xl p-2 border border-emerald-500/20"><b class="text-emerald-400">Admin reply:</b> ${esc(c.adminReply)}</div>`:""}
+      ${c.imageUrl?`<a class="text-xs text-cyan-400" href="${esc(c.imageUrl)}" target="_blank">Attachment</a>`:""}
+      <div class="flex flex-col sm:flex-row gap-2">
+        <input id="creply-${c.id}" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs" placeholder="Type reply…">
+        <button onclick="replyComplaint('${c.id}','${esc(c.phone||"")}')" class="px-3 py-2 bg-cyan-600 rounded-xl text-[10px] font-bold">Reply</button>
+        <button onclick="resolveComplaint('${c.id}','${esc(c.phone||"")}')" class="px-3 py-2 bg-emerald-600 rounded-xl text-[10px] font-bold">Resolve</button>
+      </div>
+    </div>`).join("");
+};
+function replyComplaint(id, phone){
+  const text = document.getElementById("creply-"+id)?.value?.trim();
+  if(!text){ triggerToast("Write a reply","error"); return; }
+  db.ref("admin_queues/complaints/"+id).update({ adminReply:text, repliedAt:Date.now() });
+  if(phone) db.ref("users/"+phone+"/complaints/"+id).update({ adminReply:text, status:"Replied" });
+  triggerToast("Reply sent");
+}
+
+/* User modal: hide password, show invite tree */
+const _openUser = openUserModal;
+openUserModal = function(phone){
+  currentEditPhone = phone;
+  const u = allUsers[phone]||{};
+  // find invitees
+  const invitees = Object.keys(allUsers).filter(ph=>{
+    const x = allUsers[ph]||{};
+    return x.referredByPhone === phone;
+  });
+  document.getElementById("um-title").textContent = (u.username||phone);
+  document.getElementById("um-body").innerHTML = `
+    <div class="grid grid-cols-2 gap-2 text-xs">
+      <div class="text-slate-400">Phone</div><div class="font-mono">${esc(phone)}</div>
+      <div class="text-slate-400">Email</div><div>${esc(u.email||"—")}</div>
+      <div class="text-slate-400">Password</div><div class="font-mono">••••••••</div>
+      <div class="text-slate-400">PIN</div><div class="font-mono">${u.withdrawPin?"••••":"Not set"}</div>
+      <div class="text-slate-400">KYC</div><div>${esc(u.kycStatus||"—")}</div>
+      <div class="text-slate-400">CNIC4</div><div class="font-mono">${esc(u.kycDetails?.cnicLast4||"—")}</div>
+      <div class="text-slate-400">Invited by</div><div class="font-mono text-cyan-300">${esc(u.referredByPhone&&u.referredByPhone!=="NONE"?u.referredByPhone:"—")}</div>
+      <div class="text-slate-400">Double Verify</div><div>${u.doubleVerification?"ON":"OFF"}</div>
+    </div>
+    <div class="border-t border-slate-700 pt-2">
+      <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">Invited users (${invitees.length})</div>
+      <div class="text-xs text-slate-300 max-h-24 overflow-y-auto space-y-0.5">${invitees.length?invitees.map(p=>`<div>${esc(allUsers[p]?.username||p)} <span class="font-mono text-cyan-400">${esc(p)}</span></div>`).join(""):"None"}</div>
+    </div>
+    <div class="border-t border-slate-700 pt-3 space-y-2">
+      <label class="text-[10px] text-slate-400 font-bold">Adjust Balance</label>
+      <div class="flex gap-2">
+        <input id="um-bal" type="number" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2" value="${Number(u.balance||0)}">
+        <button onclick="saveUserBalance()" class="px-3 py-2 bg-cyan-600 rounded-xl text-xs font-bold">Set</button>
+      </div>
+      <label class="text-[10px] text-slate-400 font-bold">Withdraw Limit</label>
+      <div class="flex gap-2">
+        <input id="um-limit" type="number" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2" value="${Number(u.withdrawalLimit||1000)}">
+        <button onclick="saveUserLimit()" class="px-3 py-2 bg-emerald-600 rounded-xl text-xs font-bold">Set</button>
+      </div>
+      <label class="text-[10px] text-slate-400 font-bold">Add Invite WithdrawSlots</label>
+      <div class="flex gap-2">
+        <input id="um-slots" type="number" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2" value="1">
+        <button onclick="addInviteSlots()" class="px-3 py-2 bg-amber-600 rounded-xl text-xs font-bold">Add</button>
+      </div>
+      <button onclick="downloadUserPDF('${phone}')" class="w-full py-2 bg-slate-700 rounded-xl text-xs font-bold">Download PDF Report</button>
+    </div>`;
+  const m = document.getElementById("user-modal");
+  m.classList.remove("hidden"); m.classList.add("flex");
+};
+
+/* Live alerts */
+function fireAdminAlert(text, section){
+  lastAlert = { text, section, ts: Date.now() };
+  const bar = document.getElementById("admin-live-alert");
+  const t = document.getElementById("admin-alert-text");
+  if(bar&&t){ t.textContent = text; bar.classList.remove("hidden"); }
+  setBadge("badge-alert", 1);
+  // browser notification optional
+  try{ if(Notification.permission==="granted") new Notification("Prime Horizon Admin",{body:text}); }catch(e){}
+}
+function jumpToAlert(){
+  if(!lastAlert) return;
+  showSection(lastAlert.section);
+  document.getElementById("admin-live-alert")?.classList.add("hidden");
+  setBadge("badge-alert", 0);
+}
+
+const _boot = bootListeners;
+bootListeners = function(){
+  _boot();
+  // recompute overview when users change
+  db.ref("users").on("value", ()=>{ renderOverview(); renderActivePlans(); renderAllSessions(); });
+  let prevDep=0, prevWd=0, prevKyc=0, prevCmp=0;
+  db.ref("admin_queues/deposits").on("value", snap=>{
+    let n=0; if(snap.exists()) snap.forEach(c=>{ if(/pending/i.test(c.val().status||"")) n++; });
+    if(n>prevDep) fireAdminAlert(n+" pending deposit(s)","deposits");
+    prevDep=n;
+  });
+  db.ref("admin_queues/withdrawals").on("value", snap=>{
+    let n=0; if(snap.exists()) snap.forEach(c=>{ if(/pending/i.test(c.val().status||"")) n++; });
+    if(n>prevWd) fireAdminAlert(n+" pending withdrawal(s)","withdrawals");
+    prevWd=n;
+  });
+  db.ref("admin_queues/kyc_requests").on("value", snap=>{
+    let n=0; if(snap.exists()) snap.forEach(c=>{ if(/pending/i.test(c.val().status||"pending")) n++; });
+    if(n>prevKyc) fireAdminAlert(n+" KYC request(s)","kyc");
+    prevKyc=n;
+  });
+  db.ref("admin_queues/complaints").on("value", snap=>{
+    let n=0; if(snap.exists()) snap.forEach(c=>{ if(!/resolved|closed/i.test(c.val().status||"Open")) n++; });
+    if(n>prevCmp) fireAdminAlert(n+" open complaint(s)","complaints");
+    prevCmp=n;
+  });
+  try{ Notification.requestPermission(); }catch(e){}
+};
+
+const _show = showSection;
+showSection = function(id){
+  _show(id);
+  if(id==="overview") renderOverview();
+  if(id==="activeplans") renderActivePlans();
+  if(id==="sessions") renderAllSessions();
+};
+
+
+/* free withdraw in user modal + money request setting */
+const _openU = openUserModal;
+openUserModal = function(phone){
+  _openU(phone);
+  const body = document.getElementById("um-body");
+  if(!body) return;
+  const u = allUsers[phone]||{};
+  body.innerHTML += `
+    <div class="border-t border-slate-700 pt-3 space-y-2 mt-2">
+      <label class="text-[10px] text-slate-400 font-bold">Free Withdraws (grant)</label>
+      <div class="flex gap-2">
+        <input id="um-free-wd" type="number" min="0" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2" value="${Number(u.freeWithdraws||0)}">
+        <button onclick="saveFreeWithdraws()" class="px-3 py-2 bg-teal-600 rounded-xl text-xs font-bold">Set Free WD</button>
+      </div>
+    </div>`;
+};
+function saveFreeWithdraws(){
+  const v = parseInt(document.getElementById("um-free-wd").value);
+  if(isNaN(v)||v<0) return;
+  db.ref("users/"+currentEditPhone+"/freeWithdraws").set(v);
+  triggerToast("Free withdraws set to "+v);
+}
+
+// settings field for money request min invites
+if(!document.getElementById("set-money-invites")){
+  const settings = document.getElementById("section-settings");
+  if(settings){
+    const div = document.createElement("div");
+    div.className = "glass rounded-2xl p-4 space-y-3 mt-4";
+    div.innerHTML = `<h3 class="font-bold text-amber-400">Money Request Rule</h3>
+      <p class="text-[10px] text-slate-400">After first free request, user needs this many successful invites (deposit by invitee). Set 0 to always allow.</p>
+      <input id="set-money-invites" type="number" min="0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" value="3">
+      <button onclick="db.ref('admin_settings/money_request_min_invites').set(parseInt(document.getElementById('set-money-invites').value)||0);triggerToast('Saved')" class="px-4 py-2 bg-amber-600 rounded-xl text-xs font-bold">Save</button>`;
+    settings.appendChild(div);
+  }
+}
+db.ref("admin_settings/money_request_min_invites").on("value", s=>{
+  const el = document.getElementById("set-money-invites");
+  if(el && s.exists()) el.value = s.val();
+});
+
+// On deposit approve: credit referrer successfulInvites + inviteWithdrawSlots
+const _approveDep = approveDeposit;
+approveDeposit = function(id){
+  db.ref("admin_queues/deposits/"+id).once("value", snap=>{
+    if(!snap.exists()) return;
+    const d = snap.val();
+    const phone = d.userPhone;
+    // call original credit logic via reimplement light wrapper
+    let credit = Number(d.amount||0);
+    if(d.taxAmt) credit = Math.max(0, credit - Number(d.taxAmt));
+    else if(d.taxPercent) credit = credit * (1 - Number(d.taxPercent)/100);
+    db.ref("users/"+phone).transaction(u=>{
+      if(!u) return;
+      u.balance = Number(u.balance||0) + credit;
+      u.totalDeposit = Number(u.totalDeposit||0) + Number(d.amount||0);
+      if(!u.logs) u.logs = {};
+      if(u.logs[id]) u.logs[id].status = "Approved";
+      else u.logs[id] = { id, type:"deposit", title:"Deposit approved", amount:credit, timestamp:Date.now(), status:"Approved" };
+      return u;
+    }, ()=>{
+      db.ref("admin_queues/deposits/"+id).update({ status:"Approved", approvedAt:Date.now(), credited:credit });
+      db.ref("public_feed/PF-DEP-"+id).set({ type:"deposit", username:(d.username||"User").toString().slice(0,12), amount:d.amount, ts:Date.now() });
+      // credit referrer only once per invitee first deposit
+      db.ref("users/"+phone).once("value", us=>{
+        const u = us.val()||{};
+        const ref = u.referredByPhone;
+        if(ref && ref!=="NONE" && !u._refDepositCredited){
+          db.ref("users/"+phone+"/_refDepositCredited").set(true);
+          db.ref("users/"+ref).transaction(r=>{
+            if(!r) return;
+            r.successfulInvites = (parseInt(r.successfulInvites||0)||0)+1;
+            r.inviteWithdrawSlots = (parseInt(r.inviteWithdrawSlots||0)||0)+1;
+            r.referralCount = (parseInt(r.referralCount||0)||0)+1;
+            return r;
+          });
+        }
+      });
+      triggerToast("Deposit approved · credited Rs."+credit.toFixed(0));
+    });
+  });
+};
+
+
+/* ===== FIX: DEPOSITS & WITHDRAWALS QUEUE (always show + approve/reject) ===== */
+window._depRows = [];
+window._wdRows = [];
+
+function statusIsPending(s){
+  s = String(s == null ? "Pending" : s).toLowerCase();
+  return s === "pending" || s === "" || s === "processing" || s === "new";
+}
+
+function collectQueueRows(snap){
+  const rows = [];
+  if(!snap || !snap.exists()) return rows;
+  snap.forEach(c => {
+    const v = c.val() || {};
+    rows.push(Object.assign({ id: c.key }, v));
+  });
+  // also if val is plain object without forEach working oddly
+  if(!rows.length){
+    const obj = snap.val() || {};
+    Object.keys(obj).forEach(k => {
+      if(obj[k] && typeof obj[k] === "object")
+        rows.push(Object.assign({ id: k }, obj[k]));
+    });
+  }
+  rows.sort((a,b) => (b.timestamp || b.ts || 0) - (a.timestamp || a.ts || 0));
+  return rows;
+}
+
+function renderDeposits(rows){
+  window._depRows = rows || window._depRows || [];
+  rows = window._depRows;
+  const box = document.getElementById("deposits-list");
+  if(!box) return;
+  if(!rows.length){
+    box.innerHTML = '<div class="text-slate-500 text-sm py-8 text-center">No deposit requests yet</div>';
+    return;
+  }
+  box.innerHTML = rows.slice(0, 100).map(d => {
+    const st = d.status != null ? d.status : "Pending";
+    const pending = statusIsPending(st);
+    const isBin = /binance|crypto/i.test(String(d.channel || d.gateway || d.method || ""));
+    const phone = d.userPhone || d.phone || "—";
+    const amt = Number(d.amount || 0);
+    const when = new Date(d.timestamp || d.ts || 0).toLocaleString();
+    return `<div class="glass rounded-2xl p-4 mb-2 ${isBin ? "border border-amber-500/30" : ""}">
+      <div class="flex justify-between gap-2 items-start">
+        <div class="min-w-0">
+          <div class="font-extrabold text-base">${esc(d.username || phone)} ${isBin ? '<span class="binance-badge">BINANCE</span>' : ""}</div>
+          <div class="text-xs text-cyan-400 font-mono">${esc(phone)}</div>
+          <div class="text-lg font-black text-emerald-400 mt-1">Rs. ${amt.toLocaleString()}</div>
+          <div class="text-[11px] text-slate-400 mt-1">
+            ${esc(d.channel || d.gateway || d.method || "—")}
+            · TRX: <span class="font-mono text-white">${esc(d.trxId || d.trx || "—")}</span>
+          </div>
+          <div class="text-[10px] text-slate-500">${when}</div>
+          ${d.taxAmt ? `<div class="text-[10px] text-amber-400">Tax: Rs.${Number(d.taxAmt).toFixed(2)}</div>` : ""}
+          ${d.proofUrl ? `<a href="${esc(d.proofUrl)}" target="_blank" class="inline-block mt-1 text-[11px] text-cyan-400 underline">View proof</a>` : ""}
+        </div>
+        <span class="text-[10px] font-black uppercase px-2 py-1 rounded-lg ${pending ? "bg-amber-500/20 text-amber-300" : /approve|success/i.test(st) ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-700 text-slate-300"}">${esc(st)}</span>
+      </div>
+      ${pending ? `<div class="flex gap-2 mt-3">
+        <button type="button" onclick="approveDeposit('${esc(d.id)}')" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-extrabold">APPROVE</button>
+        <button type="button" onclick="rejectDeposit('${esc(d.id)}')" class="flex-1 py-2.5 bg-rose-700 hover:bg-rose-600 rounded-xl text-xs font-extrabold">REJECT</button>
+      </div>` : ""}
+    </div>`;
+  }).join("");
+}
+
+function renderWithdrawals(rows){
+  window._wdRows = rows || window._wdRows || [];
+  rows = window._wdRows;
+  const box = document.getElementById("withdrawals-list");
+  if(!box) return;
+  if(!rows.length){
+    box.innerHTML = '<div class="text-slate-500 text-sm py-8 text-center">No withdraw requests yet</div>';
+    return;
+  }
+  box.innerHTML = rows.slice(0, 100).map(w => {
+    const st = w.status != null ? w.status : "Pending";
+    const pending = statusIsPending(st);
+    const phone = w.userPhone || w.phone || "—";
+    const amt = Number(w.amount || 0);
+    const when = new Date(w.timestamp || w.ts || 0).toLocaleString();
+    return `<div class="glass rounded-2xl p-4 mb-2">
+      <div class="flex justify-between gap-2 items-start">
+        <div class="min-w-0">
+          <div class="font-extrabold text-base">${esc(w.username || phone)}</div>
+          <div class="text-xs text-cyan-400 font-mono">${esc(phone)}</div>
+          <div class="text-lg font-black text-purple-300 mt-1">Rs. ${amt.toLocaleString()}</div>
+          <div class="text-[11px] text-slate-400 mt-1">
+            ${esc(w.method || w.channel || "—")}
+            · ${esc(w.accountTitle || w.title || "")}
+            · <span class="font-mono text-white">${esc(w.accountNumber || w.number || "")}</span>
+          </div>
+          <div class="text-[10px] text-slate-500">${when}${w.tax != null ? " · Tax Rs."+w.tax : ""}</div>
+        </div>
+        <span class="text-[10px] font-black uppercase px-2 py-1 rounded-lg ${pending ? "bg-amber-500/20 text-amber-300" : /approve|success|paid/i.test(st) ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-700 text-slate-300"}">${esc(st)}</span>
+      </div>
+      ${pending ? `<div class="mt-3 space-y-2">
+        <input id="trx-${esc(w.id)}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs" placeholder="Admin TRX / Ref ID (optional)">
+        <div class="flex gap-2">
+          <button type="button" onclick="approveWithdraw('${esc(w.id)}')" class="flex-1 py-2.5 bg-emerald-600 rounded-xl text-xs font-extrabold">APPROVE</button>
+          <button type="button" onclick="rejectWithdraw('${esc(w.id)}')" class="flex-1 py-2.5 bg-rose-700 rounded-xl text-xs font-extrabold">REJECT</button>
+        </div>
+      </div>` : ""}
+    </div>`;
+  }).join("");
+}
+
+function refreshDepWdBadges(){
+  const depP = (window._depRows || []).filter(r => statusIsPending(r.status)).length;
+  const wdP = (window._wdRows || []).filter(r => statusIsPending(r.status)).length;
+  setBadge("badge-deposits", depP);
+  setBadge("badge-withdrawals", wdP);
+  const sd = document.getElementById("stat-dep"); if(sd) sd.textContent = depP;
+  const sw = document.getElementById("stat-wd"); if(sw) sw.textContent = wdP;
+}
+
+function startDepWdListeners(){
+  // Primary paths (user app)
+  db.ref("admin_queues/deposits").on("value", snap => {
+    window._depRows = collectQueueRows(snap);
+    renderDeposits(window._depRows);
+    refreshDepWdBadges();
+  });
+  db.ref("admin_queues/withdrawals").on("value", snap => {
+    window._wdRows = collectQueueRows(snap);
+    renderWithdrawals(window._wdRows);
+    refreshDepWdBadges();
+  });
+  // Fallback legacy paths
+  db.ref("deposits").on("value", snap => {
+    if(!snap.exists()) return;
+    const extra = collectQueueRows(snap);
+    if(extra.length && !(window._depRows||[]).length){
+      window._depRows = extra;
+      renderDeposits(window._depRows);
+      refreshDepWdBadges();
+    }
+  });
+  db.ref("withdrawals").on("value", snap => {
+    if(!snap.exists()) return;
+    const extra = collectQueueRows(snap);
+    if(extra.length && !(window._wdRows||[]).length){
+      window._wdRows = extra;
+      renderWithdrawals(window._wdRows);
+      refreshDepWdBadges();
+    }
+  });
+}
+
+approveDeposit = function(id){
+  db.ref("admin_queues/deposits/"+id).once("value", snap => {
+    if(!snap.exists()){
+      // try legacy
+      db.ref("deposits/"+id).once("value", s2 => {
+        if(s2.exists()) processApproveDeposit(id, s2.val(), "deposits/");
+      });
+      return;
+    }
+    processApproveDeposit(id, snap.val(), "admin_queues/deposits/");
+  });
+};
+
+function processApproveDeposit(id, d, pathPrefix){
+  const phone = d.userPhone || d.phone;
+  if(!phone){ triggerToast("No user phone on request","error"); return; }
+  let credit = Number(d.amount || 0);
+  if(d.taxAmt) credit = Math.max(0, credit - Number(d.taxAmt));
+  else if(d.taxPercent) credit = credit * (1 - Number(d.taxPercent)/100);
+  db.ref("users/"+phone).transaction(u => {
+    if(!u) return;
+    u.balance = Number(u.balance || 0) + credit;
+    u.totalDeposit = Number(u.totalDeposit || 0) + Number(d.amount || 0);
+    if(!u.logs) u.logs = {};
+    if(u.logs[id]) u.logs[id].status = "Approved";
+    else u.logs[id] = { id, type:"deposit", title:"Deposit approved", amount: credit, timestamp: Date.now(), status:"Approved" };
+    return u;
+  }, (err, ok) => {
+    if(!ok){ triggerToast("Approve failed","error"); return; }
+    db.ref(pathPrefix + id).update({ status:"Approved", approvedAt: Date.now(), credited: credit });
+    db.ref("public_feed/PF-DEP-"+id).set({ type:"deposit", username:(d.username||"User").toString().slice(0,12), amount:d.amount, ts:Date.now() });
+    // referrer credit
+    db.ref("users/"+phone).once("value", us => {
+      const u = us.val() || {};
+      const ref = u.referredByPhone;
+      if(ref && ref !== "NONE" && !u._refDepositCredited){
+        db.ref("users/"+phone+"/_refDepositCredited").set(true);
+        db.ref("users/"+ref).transaction(r => {
+          if(!r) return;
+          r.successfulInvites = (parseInt(r.successfulInvites||0)||0) + 1;
+          r.inviteWithdrawSlots = (parseInt(r.inviteWithdrawSlots||0)||0) + 1;
+          return r;
+        });
+      }
+    });
+    triggerToast("Deposit APPROVED · Rs." + credit.toFixed(0));
+  });
+}
+
+rejectDeposit = function(id){
+  db.ref("admin_queues/deposits/"+id).once("value", snap => {
+    const d = snap.exists() ? snap.val() : null;
+    db.ref("admin_queues/deposits/"+id).update({ status:"Rejected", rejectedAt: Date.now() });
+    if(d && (d.userPhone||d.phone)){
+      const phone = d.userPhone || d.phone;
+      db.ref("users/"+phone+"/logs/"+id+"/status").set("Rejected");
+    }
+    triggerToast("Deposit rejected","error");
+  });
+};
+
+approveWithdraw = function(id){
+  const trxEl = document.getElementById("trx-"+id);
+  const trx = (trxEl && trxEl.value.trim()) || id;
+  db.ref("admin_queues/withdrawals/"+id).once("value", snap => {
+    if(!snap.exists()){ triggerToast("Request not found","error"); return; }
+    const w = snap.val();
+    db.ref("admin_queues/withdrawals/"+id).update({ status:"Approved", adminTrx: trx, trxId: trx, approvedAt: Date.now() });
+    const phone = w.userPhone || w.phone;
+    if(phone){
+      db.ref("users/"+phone+"/logs/"+id).update({ status:"Approved", trxId: trx, adminTrx: trx });
+    }
+    db.ref("public_feed/PF-WD-"+id).set({ type:"withdraw", username:(w.username||"User").toString().slice(0,12), amount:w.amount, ts:Date.now() });
+    triggerToast("Withdraw APPROVED");
+  });
+};
+
+rejectWithdraw = function(id){
+  db.ref("admin_queues/withdrawals/"+id).once("value", snap => {
+    if(!snap.exists()){ triggerToast("Not found","error"); return; }
+    const w = snap.val();
+    const phone = w.userPhone || w.phone;
+    const amount = Number(w.amount || 0);
+    const tax = Number(w.tax || 0);
+    if(phone){
+      db.ref("users/"+phone).transaction(u => {
+        if(!u) return;
+        u.balance = Number(u.balance || 0) + amount + tax;
+        if(u.logs && u.logs[id]) u.logs[id].status = "Rejected";
+        return u;
+      });
+    }
+    db.ref("admin_queues/withdrawals/"+id).update({ status:"Rejected", rejectedAt: Date.now() });
+    triggerToast("Withdraw rejected · refunded","error");
+  });
+};
+
+// Start listeners when admin enters app
+const _enterAppFix = enterApp;
+enterApp = function(){
+  _enterAppFix();
+  try { startDepWdListeners(); } catch(e){ console.error(e); }
+};
+
+// Re-render lists when opening sections
+const _showSecFix = showSection;
+showSection = function(id){
+  _showSecFix(id);
+  if(id === "deposits") renderDeposits(window._depRows || []);
+  if(id === "withdrawals") renderWithdrawals(window._wdRows || []);
+};
+
+// If already logged in session on load, listeners start via enterApp
+
+
+/* ===== ADMIN ENTERTAINMENT MODERATION ===== */
+function entAdminTab(name){
+  ["public","private","money","violations"].forEach(n => {
+    const el = document.getElementById("eadmin-"+n);
+    if(el) el.classList.toggle("hidden", n !== name);
+    const btn = document.getElementById("eadmin-tab-"+n);
+    if(btn){
+      btn.className = "px-4 py-2 rounded-xl text-xs font-bold " + (n===name ? "bg-fuchsia-600 text-white" : "bg-slate-700 text-slate-200");
+    }
+  });
+  if(name==="public") loadAdminPublicChat();
+  if(name==="private") loadAdminPrivateRooms();
+  if(name==="money") loadAdminMoneyRequests();
+  if(name==="violations") loadAdminViolations();
+}
+
+function loadAdminPublicChat(){
+  const box = document.getElementById("eadmin-public-list");
+  if(!box) return;
+  box.innerHTML = '<div class="text-slate-500 text-sm">Loading…</div>';
+  db.ref("entertainment/public").limitToLast(150).once("value", snap => {
+    if(!snap.exists()){ box.innerHTML = '<div class="text-slate-500 text-center py-6">No public messages</div>'; return; }
+    const rows = [];
+    snap.forEach(c => rows.push({ id:c.key, ...(c.val()||{}) }));
+    rows.sort((a,b)=>(b.ts||0)-(a.ts||0));
+    box.innerHTML = rows.map(m => `
+      <div class="glass rounded-xl p-3 flex justify-between gap-2 items-start">
+        <div class="min-w-0">
+          <div class="text-xs font-bold text-fuchsia-300">${esc(m.username||"User")} <span class="font-mono text-slate-500">${esc(m.phone||"")}</span></div>
+          <div class="text-sm text-white mt-0.5 break-words">${esc(m.text||"")}</div>
+          <div class="text-[10px] text-slate-500">${new Date(m.ts||0).toLocaleString()}</div>
+        </div>
+        <button type="button" onclick="deletePublicMsg('${m.id}')" class="px-2 py-1 bg-rose-700 rounded-lg text-[10px] font-bold shrink-0">Delete</button>
+      </div>`).join("");
+  });
+}
+function deletePublicMsg(id){
+  if(!confirm("Delete this public message?")) return;
+  db.ref("entertainment/public/"+id).remove();
+  triggerToast("Message deleted");
+  loadAdminPublicChat();
+}
+function clearAllPublicChat(){
+  if(!confirm("Delete ALL public chat messages?")) return;
+  db.ref("entertainment/public").remove();
+  triggerToast("Public chat cleared","error");
+  loadAdminPublicChat();
+}
+
+function loadAdminPrivateRooms(){
+  const box = document.getElementById("eadmin-private-rooms");
+  const thread = document.getElementById("eadmin-private-thread");
+  if(!box) return;
+  box.innerHTML = '<div class="text-slate-500 text-sm">Loading rooms…</div>';
+  if(thread) thread.innerHTML = 'Select a room';
+  db.ref("entertainment/private").once("value", snap => {
+    if(!snap.exists()){ box.innerHTML = '<div class="text-slate-500 text-center py-4">No private rooms</div>'; return; }
+    const rooms = [];
+    snap.forEach(c => {
+      const msgs = c.val()||{};
+      const count = typeof msgs === "object" ? Object.keys(msgs).length : 0;
+      rooms.push({ id: c.key, count });
+    });
+    rooms.sort((a,b)=>b.count-a.count);
+    box.innerHTML = rooms.map(r => `
+      <div class="glass rounded-xl p-3 flex justify-between items-center gap-2">
+        <button type="button" onclick="openAdminPrivateRoom('${r.id}')" class="text-left flex-1">
+          <div class="text-xs font-mono text-indigo-300">${esc(r.id)}</div>
+          <div class="text-[10px] text-slate-400">${r.count} messages</div>
+        </button>
+        <button type="button" onclick="deletePrivateRoom('${r.id}')" class="px-2 py-1 bg-rose-700 rounded-lg text-[10px] font-bold">Delete room</button>
+      </div>`).join("");
+  });
+}
+function openAdminPrivateRoom(roomId){
+  const thread = document.getElementById("eadmin-private-thread");
+  if(!thread) return;
+  thread.innerHTML = 'Loading…';
+  db.ref("entertainment/private/"+roomId).once("value", snap => {
+    if(!snap.exists()){ thread.innerHTML = 'Empty'; return; }
+    const rows = [];
+    snap.forEach(c => rows.push({ id:c.key, ...(c.val()||{}) }));
+    rows.sort((a,b)=>(a.ts||0)-(b.ts||0));
+    thread.innerHTML = `<div class="text-[10px] text-slate-400 mb-2 font-mono">${esc(roomId)}</div>` + rows.map(m => `
+      <div class="flex justify-between gap-2 py-2 border-b border-slate-700/50">
+        <div>
+          <div class="text-[10px] text-indigo-300 font-mono">${esc(m.from||"")}</div>
+          <div class="text-sm text-white">${esc(m.text||"")}</div>
+          <div class="text-[9px] text-slate-500">${new Date(m.ts||0).toLocaleString()}</div>
+        </div>
+        <button type="button" onclick="deletePrivateMsg('${roomId}','${m.id}')" class="text-rose-400 text-[10px] font-bold">Delete</button>
+      </div>`).join("");
+  });
+}
+function deletePrivateMsg(roomId, msgId){
+  db.ref("entertainment/private/"+roomId+"/"+msgId).remove();
+  triggerToast("Private message deleted");
+  openAdminPrivateRoom(roomId);
+}
+function deletePrivateRoom(roomId){
+  if(!confirm("Delete entire private room?")) return;
+  db.ref("entertainment/private/"+roomId).remove();
+  triggerToast("Room deleted","error");
+  loadAdminPrivateRooms();
+}
+
+function loadAdminMoneyRequests(){
+  const box = document.getElementById("eadmin-money-list");
+  if(!box) return;
+  box.innerHTML = '<div class="text-slate-500 text-sm">Scanning users…</div>';
+  db.ref("users").once("value", snap => {
+    const rows = [];
+    if(snap.exists()){
+      snap.forEach(u => {
+        const phone = u.key;
+        const data = u.val()||{};
+        const reqs = data.moneyRequests || {};
+        Object.keys(reqs).forEach(id => {
+          rows.push({ id, phone, username: data.username, ...(reqs[id]||{}) });
+        });
+        const out = data.moneyRequestsOut || {};
+        Object.keys(out).forEach(id => {
+          // avoid dup if already as inbox on other user
+          if(!rows.find(r => r.id === id && r.from === out[id].from))
+            rows.push({ id, phone, username: data.username, direction:"out", ...(out[id]||{}) });
+        });
+      });
+    }
+    rows.sort((a,b)=>(b.ts||0)-(a.ts||0));
+    if(!rows.length){ box.innerHTML = '<div class="text-slate-500 text-center py-6">No money requests</div>'; return; }
+    box.innerHTML = rows.slice(0,120).map(r => `
+      <div class="glass rounded-xl p-3">
+        <div class="flex justify-between gap-2">
+          <div>
+            <div class="text-sm font-bold text-white">Rs. ${Number(r.amount||0).toLocaleString()}
+              <span class="text-[10px] font-bold uppercase ${/pending/i.test(r.status||"pending")?"text-amber-400":/accept/i.test(r.status||"")?"text-emerald-400":"text-slate-400"}">${esc(r.status||"pending")}</span>
+            </div>
+            <div class="text-[11px] text-slate-400">From <span class="text-cyan-300 font-mono">${esc(r.from||"—")}</span> → To <span class="text-cyan-300 font-mono">${esc(r.to||r.phone||"—")}</span></div>
+            <div class="text-[10px] text-slate-500">${new Date(r.ts||0).toLocaleString()}</div>
+          </div>
+          <button type="button" onclick="deleteMoneyReq('${esc(r.to||r.phone||"")}','${r.id}','${esc(r.from||"")}')" class="px-2 py-1 bg-rose-700 rounded-lg text-[10px] font-bold h-fit">Delete</button>
+        </div>
+      </div>`).join("");
+  });
+}
+function deleteMoneyReq(toPhone, id, fromPhone){
+  if(toPhone) db.ref("users/"+toPhone+"/moneyRequests/"+id).remove();
+  if(fromPhone) db.ref("users/"+fromPhone+"/moneyRequestsOut/"+id).remove();
+  triggerToast("Money request removed");
+  loadAdminMoneyRequests();
+}
+
+function loadAdminViolations(){
+  const box = document.getElementById("eadmin-violations-list");
+  if(!box) return;
+  box.innerHTML = 'Loading…';
+  db.ref("users").once("value", snap => {
+    const rows = [];
+    if(snap.exists()){
+      snap.forEach(c => {
+        const u = c.val()||{};
+        const v = parseInt(u.chatViolations||0)||0;
+        const banned = u.banned || u.isBanned || u.status==="banned";
+        if(v > 0 || banned){
+          rows.push({ phone:c.key, username:u.username, violations:v, banned, banReason:u.banReason||"" });
+        }
+      });
+    }
+    rows.sort((a,b)=>b.violations-a.violations);
+    if(!rows.length){ box.innerHTML = '<div class="text-slate-500 text-center py-6">No violations</div>'; return; }
+    box.innerHTML = rows.map(r => `
+      <div class="glass rounded-xl p-3 flex justify-between gap-2 items-center">
+        <div>
+          <div class="font-bold">${esc(r.username||r.phone)} ${r.banned?'<span class="text-[10px] bg-rose-600 px-2 py-0.5 rounded-lg">BANNED</span>':''}</div>
+          <div class="text-xs text-cyan-400 font-mono">${esc(r.phone)}</div>
+          <div class="text-[11px] text-slate-400">Violations: <b class="text-amber-300">${r.violations}</b> ${r.banReason?('· '+esc(r.banReason)):''}</div>
+        </div>
+        <div class="flex flex-col gap-1">
+          <button type="button" onclick="db.ref('users/${r.phone}/chatViolations').set(0);triggerToast('Reset');loadAdminViolations()" class="px-2 py-1 bg-slate-600 rounded-lg text-[10px] font-bold">Reset warns</button>
+          ${r.banned?`<button type="button" onclick="db.ref('users/${r.phone}').update({banned:false,isBanned:false,status:'active'});triggerToast('Unbanned');loadAdminViolations()" class="px-2 py-1 bg-emerald-600 rounded-lg text-[10px] font-bold">Unban</button>`:''}
+        </div>
+      </div>`).join("");
+  });
+}
+
+const _showEnt = showSection;
+showSection = function(id){
+  _showEnt(id);
+  if(id === "entertainment"){
+    entAdminTab("public");
+  }
+};
+
+
+/* ===== ADMIN CREDENTIALS CHANGE ===== */
+window._adminCreds = { username: "admin", password: "admin123" };
+
+function loadAdminCredentials(cb){
+  db.ref("admin_settings/admin_login").once("value", snap => {
+    if(snap.exists()){
+      const v = snap.val() || {};
+      window._adminCreds = {
+        username: String(v.username || "admin"),
+        password: String(v.password || "admin123")
+      };
+    }
+    if(typeof cb === "function") cb(window._adminCreds);
+  }, err => {
+    if(typeof cb === "function") cb(window._adminCreds);
+  });
+}
+
+function saveAdminCredentials(){
+  const nu = (document.getElementById("adm-new-user")?.value || "").trim();
+  const np = document.getElementById("adm-new-pass")?.value || "";
+  const np2 = document.getElementById("adm-new-pass2")?.value || "";
+  const cur = document.getElementById("adm-cur-pass")?.value || "";
+  if(!nu){ triggerToast("Enter username","error"); return; }
+  if(!np || np.length < 4){ triggerToast("Password min 4 characters","error"); return; }
+  if(np !== np2){ triggerToast("Passwords do not match","error"); return; }
+  loadAdminCredentials(creds => {
+    if(cur !== creds.password){
+      triggerToast("Current password is wrong","error");
+      return;
+    }
+    db.ref("admin_settings/admin_login").set({
+      username: nu,
+      password: np,
+      updatedAt: Date.now()
+    }, err => {
+      if(err){ triggerToast("Save failed","error"); return; }
+      window._adminCreds = { username: nu, password: np };
+      document.getElementById("adm-new-pass").value = "";
+      document.getElementById("adm-new-pass2").value = "";
+      document.getElementById("adm-cur-pass").value = "";
+      document.getElementById("adm-new-user").value = nu;
+      triggerToast("Admin username & password updated");
+      const hint = document.getElementById("adm-cred-hint");
+      if(hint) hint.textContent = "Current username: " + nu;
+    });
+  });
+}
+
+// Override login to use Firebase credentials
+const _tryLoginOrig = tryLogin;
+tryLogin = function(){
+  const u = (document.getElementById("admin-user")?.value || "").trim();
+  const p = document.getElementById("admin-pass")?.value || "";
+  loadAdminCredentials(creds => {
+    if(u === creds.username && p === creds.password){
+      sessionStorage.setItem("ph_admin", "1");
+      enterApp();
+    } else {
+      // fallback default if firebase empty never set
+      if(u === "admin" && p === "admin123" && creds.username === "admin" && creds.password === "admin123"){
+        sessionStorage.setItem("ph_admin", "1");
+        enterApp();
+      } else {
+        triggerToast("Invalid username or password","error");
+      }
+    }
+  });
+};
+
+// Prefill username field in settings when opening settings
+const _showCred = showSection;
+showSection = function(id){
+  _showCred(id);
+  if(id === "settings"){
+    loadAdminCredentials(creds => {
+      const el = document.getElementById("adm-new-user");
+      if(el && !el.value) el.value = creds.username;
+      const hint = document.getElementById("adm-cred-hint");
+      if(hint) hint.textContent = "Current username: " + creds.username;
+    });
+  }
+};
+
+window.onload = checkAdminLogin;
+document.getElementById("login-password")?.addEventListener("keydown", e=>{ if(e.key==="Enter") performAdminLogin(); });
+</script>
 </body>
 </html>
