@@ -4,25 +4,70 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Prime Horizon · Admin Panel v6.1</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com">
+/* ===== SERVER LOCK UI PROFESSIONAL ===== */
+function applyServerLock(offline){
+  const banner = document.getElementById("server-offline-banner");
+  if(banner) banner.classList.toggle("hidden", !offline);
+  try{ setBadge("badge-server-bill", offline ? 1 : 0); }catch(e){}
+  // top alert bar
+  let bar = document.getElementById("server-lock-topbar");
+  if(!bar){
+    bar = document.createElement("div");
+    bar.id = "server-lock-topbar";
+    bar.className = "hidden fixed top-0 left-0 right-0 z-[100] bg-gradient-to-r from-rose-600 to-orange-600 text-white text-center text-xs font-black py-2.5 tracking-wide shadow-lg";
+    bar.innerHTML = '⚠ SERVER BILL DUE — Actions locked · Open <b>Server Usages &amp; Bills</b> to pay';
+    document.body.appendChild(bar);
+  }
+  if(offline){
+    bar.classList.remove("hidden");
+    document.querySelectorAll(".nav-item").forEach(el => {
+      if(el.id === "nav-server-bills" || el.id === "nav-complaints" || el.id === "nav-kyc"){ el.style.opacity=""; el.style.pointerEvents=""; el.classList.add("ring-2","ring-rose-500"); return; }
+      el.style.opacity = "0.35";
+      el.style.pointerEvents = "none";
+    });
+    try{ showSection("server-bills"); }catch(e){}
+  } else {
+    bar.classList.add("hidden");
+    document.querySelectorAll(".nav-item").forEach(el => {
+      el.style.opacity = "";
+      el.style.pointerEvents = "";
+      el.classList.remove("ring-2","ring-rose-500");
+    });
+  }
+}
+
+</script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-body{font-family:Inter,system-ui,sans-serif;background:#020617;color:#e2e8f0}
+body{"font-family":Inter,system-ui,sans-serif;background:#020617;color:#e2e8f0}
 .glass{background:rgba(15,23,42,.92);backdrop-filter:blur(20px);border:1px solid rgba(148,163,184,.12)}
 .section{display:none}.section.active{display:block;animation:fadeInUp .35s ease}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .nav-active{background:#1e2937;border-left:4px solid #06b6d4;color:#fff;font-weight:700}
 .modern-btn{transition:.2s}.modern-btn:hover{transform:translateY(-2px)}
 .custom-scroll::-webkit-scrollbar{width:6px}.custom-scroll::-webkit-scrollbar-thumb{background:#475569;border-radius:20px}
-.badge{min-width:1.25rem;height:1.25rem;padding:0 .4rem;border-radius:999px;font-size:10px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.badge{"min-width":1.25rem;height:1.25rem;padding:0 .4rem;border-radius:999px;font-size:10px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
 .login-checkbox{appearance:none;width:1.1em;height:1.1em;border:2px solid #475569;border-radius:.25em;display:grid;place-content:center;cursor:pointer;background:#0f172a}
 .login-checkbox:checked{background:#06b6d4;border-color:#06b6d4}
 .login-checkbox:checked::before{content:"";width:.55em;height:.55em;clip-path:polygon(14% 44%,0 65%,50% 100%,100% 16%,80% 0,43% 62%);background:#fff}
-input,select,textarea{color-scheme:dark}
+input,select,textarea{"color-scheme":dark}
 .binance-badge{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3);padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700}
+
+#section-user-detail.section.active, #section-user-detail.active { display:block !important; }
+.ud-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+@media(min-width:768px){ .ud-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+.ud-stat { background:rgba(15,23,42,.8); border:1px solid rgba(148,163,184,.15); border-radius:14px; padding:12px; }
+.ud-stat .lbl { font-size:9px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em; }
+.ud-stat .val { font-size:14px; font-weight:900; color:#fff; margin-top:4px; }
+.ud-tabs { display:flex; flex-wrap:wrap; gap:6px; }
+.ud-tabs button { padding:8px 12px; border-radius:10px; font-size:10px; font-weight:900; background:#1e293b; color:#cbd5e1; border:1px solid rgba(255,255,255,.08); }
+.ud-tabs button.on { background:linear-gradient(135deg,#0891b2,#4f46e5); color:#fff; border-color:transparent; }
+.ud-tx { max-height:420px; overflow-y:auto; }
 </style>
+
 </head>
 <body class="bg-slate-950 text-slate-200">
 
@@ -48,8 +93,9 @@ input,select,textarea{color-scheme:dark}
           <input id="login-password" type="password" class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-sm outline-none focus:border-cyan-500" placeholder="••••••••">
         </div>
         <label class="flex items-center gap-2 text-xs font-bold text-slate-300 cursor-pointer">
-          <input type="checkbox" id="login-2h-check" class="login-checkbox"> Auto login next 2 hours
+          <input type="checkbox" id="login-24h-check" class="login-checkbox"> Auto login next 24 hours
         </label>
+        <p id="admin-login-error" class="hidden text-center text-rose-400 text-xs font-bold bg-rose-500/10 border border-rose-500/30 rounded-xl px-3 py-2"></p>
         <button onclick="performAdminLogin()" class="w-full py-3.5 bg-gradient-to-r from-cyan-600 to-emerald-600 rounded-2xl font-extrabold modern-btn">LOGIN TO DASHBOARD</button>
       </div>
     </div>
@@ -83,6 +129,7 @@ input,select,textarea{color-scheme:dark}
       <div onclick="showSection('entertainment')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-entertainment"><i class="fa-solid fa-comments w-5 text-fuchsia-400"></i><span class="font-semibold">Entertainment</span></div>
       <div onclick="showSection('luckydraw')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-luckydraw"><i class="fa-solid fa-dice w-5 text-fuchsia-400"></i><span class="font-semibold">Lucky Draw</span></div>
       <div onclick="showSection('plans')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-plans"><i class="fa-solid fa-seedling w-5 text-teal-400"></i><span class="font-semibold">Plans</span></div>
+      <div onclick="showSection('server-bills')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-server-bills"><i class="fa-solid fa-server w-5 text-amber-400"></i><span class="font-semibold">Server Usages &amp; Bills</span><span id="badge-server-bill" class="badge bg-rose-500 text-white ml-auto hidden">!</span></div>
       <div onclick="showSection('settings')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800" id="nav-settings"><i class="fa-solid fa-gear w-5 text-slate-400"></i><span class="font-semibold">Settings</span></div>
       <div onclick="adminLogout()" class="flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-rose-900/30 text-rose-400 mt-4"><i class="fa-solid fa-right-from-bracket w-5"></i><span class="font-semibold">Logout</span></div>
     </div>
@@ -140,27 +187,47 @@ input,select,textarea{color-scheme:dark}
       </section>
 
       <!-- KYC -->
+      
+      <section id="section-user-detail" class="section space-y-3 hidden">
+        <button type="button" onclick="closeUserDetail()" class="px-3 py-1.5 bg-slate-700 rounded-xl text-[10px] font-bold">← Back to users</button>
+        <div id="user-detail-page" class="space-y-3"></div>
+      </section>
+
       <section id="section-kyc" class="section space-y-3">
-        <h2 class="text-xl font-black">KYC Approvals</h2>
-        <p class="text-xs text-slate-400">User submits: Name, DOB, CNIC last 4 digits → Pending → Approve = Verified</p>
-        <div id="kyc-list" class="space-y-2"></div>
+        <div class="flex flex-wrap justify-between items-center gap-2">
+          <div>
+            <h2 class="text-xl font-black">KYC Approvals</h2>
+            <p class="text-xs text-slate-400">Purani + nayi requests · Accept / Decline</p>
+          </div>
+          <button type="button" onclick="loadKycNow()" class="px-3 py-1.5 bg-slate-700 rounded-xl text-[10px] font-bold">Refresh</button>
+        </div>
+        <div class="flex gap-2 text-[10px] font-bold">
+          <button type="button" onclick="window._kycFilter='pending';loadKycNow()" class="px-2 py-1 rounded-lg bg-amber-600/30 text-amber-300">Pending</button>
+          <button type="button" onclick="window._kycFilter='all';loadKycNow()" class="px-2 py-1 rounded-lg bg-slate-700 text-slate-200">All</button>
+          <button type="button" onclick="window._kycFilter='approved';loadKycNow()" class="px-2 py-1 rounded-lg bg-emerald-600/30 text-emerald-300">Approved</button>
+          <button type="button" onclick="window._kycFilter='rejected';loadKycNow()" class="px-2 py-1 rounded-lg bg-rose-600/30 text-rose-300">Rejected</button>
+        </div>
+        <input id="q-kyc-search" oninput="filterQueueList('kyc-list', this.value)" placeholder="Search KYC…" class="w-full mb-2 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs"><div id="kyc-list" class="space-y-2"></div>
       </section>
 
       <!-- DEPOSITS -->
       <section id="section-deposits" class="section space-y-3">
         <h2 class="text-xl font-black">Deposits Queue</h2>
-        <div id="deposits-list" class="space-y-2"></div>
+        <input id="q-dep-search" oninput="filterQueueList('deposits-list', this.value)" placeholder="Search deposits…" class="w-full mb-2 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs"><div id="deposits-list" class="space-y-2"></div>
       </section>
 
       <!-- WITHDRAWALS -->
       <section id="section-withdrawals" class="section space-y-3">
         <h2 class="text-xl font-black">Withdrawals Queue</h2>
-        <div id="withdrawals-list" class="space-y-2"></div>
+        <input id="q-wd-search" oninput="filterQueueList('withdrawals-list', this.value)" placeholder="Search withdrawals…" class="w-full mb-2 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs"><div id="withdrawals-list" class="space-y-2"></div>
       </section>
 
       <!-- COMPLAINTS -->
       <section id="section-complaints" class="section space-y-3">
-        <h2 class="text-xl font-black">Complaints</h2>
+        <div class="flex justify-between items-center gap-2">
+          <h2 class="text-xl font-black">Complaints</h2>
+          <button type="button" onclick="loadComplaintsNow()" class="px-3 py-1.5 bg-slate-700 rounded-xl text-[10px] font-bold">Refresh</button>
+        </div>
         <div id="complaints-list" class="space-y-2"></div>
       </section>
 
@@ -239,6 +306,44 @@ input,select,textarea{color-scheme:dark}
         <p class="text-xs text-slate-400">Devices / locations users are logged in from. Force logout available.</p>
         <input id="session-search" oninput="renderAllSessions()" placeholder="Filter by phone" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm w-full max-w-xs">
         <div id="sessions-list" class="space-y-2"></div>
+      </section>
+
+      
+      <section id="section-server-bills" class="section space-y-4">
+        <h2 class="text-xl font-black flex items-center gap-2"><i class="fa-solid fa-server text-amber-400"></i> Server Usages &amp; Bills</h2>
+        <div id="server-offline-banner" class="hidden glass rounded-2xl p-4 border border-rose-500/40 text-rose-300 text-sm font-bold">
+          ⚠ Server / billing lock active — most admin actions are disabled until bill is paid.
+        </div>
+        <div class="glass rounded-2xl p-5 space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-xs text-slate-400 font-bold uppercase">Status</span>
+            <span id="srv-status-pill" class="text-xs font-black px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300">ONLINE</span>
+          </div>
+          <div>
+            <div class="text-[10px] text-slate-400 font-bold uppercase">Usage</div>
+            <div id="srv-usage-view" class="text-lg font-bold text-white">—</div>
+          </div>
+          <div>
+            <div class="text-[10px] text-slate-400 font-bold uppercase">Bill</div>
+            <div id="srv-bill-view" class="text-2xl font-black text-amber-400">Rs. 0</div>
+          </div>
+          <div>
+            <div class="text-[10px] text-slate-400 font-bold uppercase">Description</div>
+            <div id="srv-desc-view" class="text-sm text-slate-300">—</div>
+          </div>
+          <div>
+            <div class="text-[10px] text-slate-400 font-bold uppercase">Project ID</div>
+            <div class="flex gap-2 items-center">
+              <code id="srv-project-view" class="text-sm font-mono text-cyan-300">—</code>
+              <button type="button" onclick="copyProjectId()" class="px-2 py-1 bg-slate-700 rounded-lg text-[10px] font-bold">Copy</button>
+            </div>
+          </div>
+          <div class="text-[10px] text-slate-500" id="srv-date-view"></div>
+          <a href="https://mrcrazydev.netlify.app/" target="_blank" rel="noopener"
+             class="block w-full text-center py-3.5 rounded-xl font-extrabold text-sm bg-gradient-to-r from-amber-500 to-orange-600 text-black">
+            PAY NOW
+          </a>
+        </div>
       </section>
 
       <section id="section-settings" class="section space-y-4">
@@ -378,22 +483,58 @@ function triggerToast(msg, type="success"){
   setTimeout(()=>el.remove(), 3200);
 }
 
-function performAdminLogin(){
-  const u = document.getElementById("login-username").value.trim();
-  const p = document.getElementById("login-password").value;
-  if(u===ADMIN_USER && p===ADMIN_PASS){
-    const twoH = document.getElementById("login-2h-check").checked;
-    const exp = twoH ? Date.now()+2*60*60*1000 : Date.now()+12*60*60*1000;
-    localStorage.setItem("ph_admin_session", JSON.stringify({ok:1, exp}));
-    enterApp();
-  } else triggerToast("Invalid credentials","error");
+
+/* ===== FIXED 24H AUTO LOGIN ===== */
+function showAdminLoginError(msg){
+  const err = document.getElementById("admin-login-error");
+  if(err){ err.textContent = msg; err.classList.remove("hidden"); }
+  ["login-password","login-username"].forEach(id => {
+    const el = document.getElementById(id);
+    if(el){ el.classList.add("border-rose-500"); setTimeout(()=>el.classList.remove("border-rose-500"), 1500); }
+  });
+  try{ triggerToast(msg,"error"); }catch(e){}
 }
-function checkAdminLogin(){
+function clearAdminLoginError(){
+  const err = document.getElementById("admin-login-error");
+  if(err){ err.textContent=""; err.classList.add("hidden"); }
+}
+function saveAdminSession(hours){
+  const exp = Date.now() + (hours * 60 * 60 * 1000);
+  localStorage.setItem("ph_admin_session", JSON.stringify({ ok: true, exp: exp }));
+  sessionStorage.setItem("ph_admin", "1");
+}
+function clearAdminSession(){
+  localStorage.removeItem("ph_admin_session");
+  sessionStorage.removeItem("ph_admin");
+}
+function hasValidAdminSession(){
   try{
-    const s = JSON.parse(localStorage.getItem("ph_admin_session")||"{}");
-    if(s.ok && s.exp > Date.now()) enterApp();
-  }catch(e){}
+    const raw = localStorage.getItem("ph_admin_session");
+    if(!raw) return false;
+    const s = JSON.parse(raw);
+    if(s && s.ok && s.exp && Number(s.exp) > Date.now()) return true;
+    clearAdminSession();
+    return false;
+  }catch(e){ clearAdminSession(); return false; }
 }
+/* performAdminLogin defined above */
+function checkAdminLogin(){
+  // 1) sessionStorage same tab
+  if(sessionStorage.getItem("ph_admin") === "1"){
+    enterApp();
+    return;
+  }
+  // 2) 24h localStorage auto login
+  if(hasValidAdminSession()){
+    sessionStorage.setItem("ph_admin", "1");
+    enterApp();
+  }
+}
+function adminLogout(){
+  clearAdminSession();
+  location.reload();
+}
+
 function adminLogout(){
   localStorage.removeItem("ph_admin_session");
   location.reload();
@@ -423,7 +564,7 @@ function showSection(id){
   });
   const nav = document.getElementById("nav-"+id);
   if(nav){ nav.classList.add("nav-active"); nav.classList.remove("hover:bg-slate-800"); }
-  const titles = {dashboard:"Dashboard",overview:"Overview & P/L",activeplans:"Active Plans",sessions:"Sessions",users:"Users",kyc:"KYC",deposits:"Deposits",withdrawals:"Withdrawals",complaints:"Complaints",entertainment:"Entertainment",luckydraw:"Lucky Draw",plans:"Plans",settings:"Settings"};
+  const titles = {dashboard:"Dashboard",overview:"Overview & P/L",activeplans:"Active Plans",sessions:"Sessions",users:"Users",kyc:"KYC",deposits:"Deposits",withdrawals:"Withdrawals",complaints:"Complaints",entertainment:"Entertainment",luckydraw:"Lucky Draw",plans:"Plans","server-bills":"Server Usages & Bills",settings:"Settings"};
   document.getElementById("top-section-title").textContent = titles[id]||id;
   closeMobileSidebar();
   if(id==="luckydraw") loadLuckyDrawAdmin();
@@ -1840,42 +1981,1110 @@ function saveAdminCredentials(){
 }
 
 // Override login to use Firebase credentials
-const _tryLoginOrig = tryLogin;
-tryLogin = function(){
-  const u = (document.getElementById("admin-user")?.value || "").trim();
-  const p = document.getElementById("admin-pass")?.value || "";
-  loadAdminCredentials(creds => {
+tryLogin = function(){ performAdminLogin(); };
+
+checkAdminLogin = function(){ try{ const s=JSON.parse(localStorage.getItem("ph_admin_session")||"{}"); if(s.ok && s.exp>Date.now()){ sessionStorage.setItem("ph_admin","1"); enterApp(); } }catch(e){} };
+
+// logout should clear 24h session
+if(typeof logoutAdmin === "function"){
+  const _lo = logoutAdmin;
+  logoutAdmin = function(){ clearAdminSession(); _lo(); };
+} else {
+  window.logoutAdmin = function(){
+    clearAdminSession();
+    location.reload();
+  };
+}
+
+document.getElementById("login-password")?.addEventListener("keydown", e => { if(e.key==="Enter") performAdminLogin(); });
+document.getElementById("login-username")?.addEventListener("keydown", e => { if(e.key==="Enter") performAdminLogin(); });
+window.onload = checkAdminLogin;
+document.getElementById("login-password")?.addEventListener("keydown", e=>{ if(e.key==="Enter") performAdminLogin(); });
+
+/* FORCE FINAL LOGIN HANDLERS */
+function performAdminLogin(){
+  clearAdminLoginError();
+  const u = (document.getElementById("login-username")?.value || "").trim();
+  const p = document.getElementById("login-password")?.value || "";
+  if(!u || !p){ showAdminLoginError("Username aur password dono zaroori hain"); return; }
+  const onSuccess = () => {
+    clearAdminLoginError();
+    if(document.getElementById("login-24h-check")?.checked){
+      const exp = Date.now() + 24*60*60*1000;
+      localStorage.setItem("ph_admin_session", JSON.stringify({ok:true, exp:exp}));
+    } else {
+      localStorage.removeItem("ph_admin_session");
+    }
+    sessionStorage.setItem("ph_admin", "1");
+    enterApp();
+  };
+  const onFail = () => showAdminLoginError("Galat username ya password — dobara try karein");
+  const run = (cu, cp) => { if(u===cu && p===cp) onSuccess(); else onFail(); };
+  if(typeof loadAdminCredentials === "function"){
+    loadAdminCredentials(creds => {
+      run((creds&&creds.username)||(typeof ADMIN_USER!=="undefined"?ADMIN_USER:"admin"),
+          (creds&&creds.password)||(typeof ADMIN_PASS!=="undefined"?ADMIN_PASS:"admin123"));
+    });
+  } else {
+    run(typeof ADMIN_USER!=="undefined"?ADMIN_USER:"admin", typeof ADMIN_PASS!=="undefined"?ADMIN_PASS:"admin123");
+  }
+}
+function checkAdminLogin(){
+  if(sessionStorage.getItem("ph_admin")==="1"){ enterApp(); return; }
+  try{
+    const s = JSON.parse(localStorage.getItem("ph_admin_session")||"{}");
+    if(s.ok && s.exp && s.exp > Date.now()){ sessionStorage.setItem("ph_admin","1"); enterApp(); }
+  }catch(e){}
+}
+function adminLogout(){
+  localStorage.removeItem("ph_admin_session");
+  sessionStorage.removeItem("ph_admin");
+  location.reload();
+}
+
+
+/* ===== ULTIMATE ADMIN LOGIN + 24H + LIVE CREDS + SERVER LOCK ===== */
+window.ADMIN_SESSION_KEY = "ph_admin_session";
+
+window.showAdminLoginError = function(msg){
+  var err = document.getElementById("admin-login-error");
+  if(err){ err.textContent = msg; err.classList.remove("hidden"); }
+  ["login-password","login-username"].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){ el.classList.add("border-rose-500"); setTimeout(function(){ el.classList.remove("border-rose-500"); }, 1500); }
+  });
+  try{ triggerToast(msg, "error"); }catch(e){}
+};
+window.clearAdminLoginError = function(){
+  var err = document.getElementById("admin-login-error");
+  if(err){ err.textContent = ""; err.classList.add("hidden"); }
+};
+
+window.getLiveAdminCreds = function(cb){
+  var fallback = {
+    username: (typeof ADMIN_USER !== "undefined" ? ADMIN_USER : "admin"),
+    password: (typeof ADMIN_PASS !== "undefined" ? ADMIN_PASS : "admin123")
+  };
+  try{
+    db.ref("admin_settings/admin_login").once("value", function(snap){
+      if(snap.exists()){
+        var v = snap.val() || {};
+        cb({
+          username: String(v.username || fallback.username),
+          password: String(v.password || fallback.password)
+        });
+      } else {
+        db.ref("admin_settings/credentials").once("value", function(snap2){
+          if(snap2.exists()){
+            var v2 = snap2.val() || {};
+            cb({
+              username: String(v2.username || fallback.username),
+              password: String(v2.password || fallback.password)
+            });
+          } else cb(fallback);
+        });
+      }
+    });
+  }catch(e){ cb(fallback); }
+};
+
+window.performAdminLogin = function(){
+  clearAdminLoginError();
+  var u = (document.getElementById("login-username") && document.getElementById("login-username").value || "").trim();
+  var p = document.getElementById("login-password") && document.getElementById("login-password").value || "";
+  if(!u || !p){
+    showAdminLoginError("Username aur password dono zaroori hain");
+    return;
+  }
+  getLiveAdminCreds(function(creds){
     if(u === creds.username && p === creds.password){
+      clearAdminLoginError();
+      var want24 = !!(document.getElementById("login-24h-check") && document.getElementById("login-24h-check").checked);
+      if(want24){
+        var exp = Date.now() + 24 * 60 * 60 * 1000;
+        localStorage.setItem(window.ADMIN_SESSION_KEY, JSON.stringify({ ok: true, exp: exp, user: u }));
+      } else {
+        localStorage.removeItem(window.ADMIN_SESSION_KEY);
+      }
       sessionStorage.setItem("ph_admin", "1");
+      sessionStorage.setItem("ph_admin_user", u);
       enterApp();
     } else {
-      // fallback default if firebase empty never set
-      if(u === "admin" && p === "admin123" && creds.username === "admin" && creds.password === "admin123"){
-        sessionStorage.setItem("ph_admin", "1");
-        enterApp();
-      } else {
-        triggerToast("Invalid username or password","error");
-      }
+      showAdminLoginError("Galat username ya password — dobara try karein");
     }
   });
 };
 
-// Prefill username field in settings when opening settings
-const _showCred = showSection;
-showSection = function(id){
-  _showCred(id);
-  if(id === "settings"){
-    loadAdminCredentials(creds => {
-      const el = document.getElementById("adm-new-user");
-      if(el && !el.value) el.value = creds.username;
-      const hint = document.getElementById("adm-cred-hint");
-      if(hint) hint.textContent = "Current username: " + creds.username;
-    });
+// alias so any old onclick/listener works
+window.tryLogin = function(){ window.performAdminLogin(); };
+
+window.checkAdminLogin = function(){
+  if(sessionStorage.getItem("ph_admin") === "1"){
+    enterApp();
+    return;
+  }
+  try{
+    var raw = localStorage.getItem(window.ADMIN_SESSION_KEY);
+    if(!raw) return;
+    var s = JSON.parse(raw);
+    if(s && s.ok && s.exp && Number(s.exp) > Date.now()){
+      sessionStorage.setItem("ph_admin", "1");
+      if(s.user) sessionStorage.setItem("ph_admin_user", s.user);
+      enterApp();
+    } else {
+      localStorage.removeItem(window.ADMIN_SESSION_KEY);
+    }
+  }catch(e){
+    localStorage.removeItem(window.ADMIN_SESSION_KEY);
   }
 };
 
-window.onload = checkAdminLogin;
-document.getElementById("login-password")?.addEventListener("keydown", e=>{ if(e.key==="Enter") performAdminLogin(); });
+window.adminLogout = function(){
+  localStorage.removeItem(window.ADMIN_SESSION_KEY);
+  sessionStorage.removeItem("ph_admin");
+  sessionStorage.removeItem("ph_admin_user");
+  location.reload();
+};
+
+// Live credential updates: if password changed while logged in, optional notice
+try{
+  db.ref("admin_settings/admin_login").on("value", function(snap){
+    window._liveAdminCreds = snap.val() || null;
+  });
+  db.ref("admin_settings/credentials").on("value", function(snap){
+    if(!window._liveAdminCreds) window._liveAdminCreds = snap.val() || null;
+  });
+}catch(e){}
+
+// Server lock — listen both paths
+window.applyServerLock = function(offline){
+  var banner = document.getElementById("server-offline-banner");
+  if(banner) banner.classList.toggle("hidden", !offline);
+  try{ setBadge("badge-server-bill", offline ? 1 : 0); }catch(e){}
+  var bar = document.getElementById("server-lock-topbar");
+  if(!bar){
+    bar = document.createElement("div");
+    bar.id = "server-lock-topbar";
+    bar.style.cssText = "display:none;position:fixed;top:0;left:0;right:0;z-index:200;background:linear-gradient(90deg,#e11d48,#ea580c);color:#fff;text-align:center;font-size:12px;font-weight:900;padding:10px;letter-spacing:.03em";
+    bar.innerHTML = "⚠ SERVER BILL DUE — Panel locked · Open Server Usages & Bills";
+    document.body.appendChild(bar);
+  }
+  bar.style.display = offline ? "block" : "none";
+  document.querySelectorAll(".nav-item").forEach(function(el){
+    if(el.id === "nav-server-bills" || el.id === "nav-complaints" || el.id === "nav-kyc"){
+      el.style.opacity = "1";
+      el.style.pointerEvents = "auto";
+      return;
+    }
+    if(offline){
+      el.style.opacity = "0.35";
+      el.style.pointerEvents = "none";
+    } else {
+      el.style.opacity = "";
+      el.style.pointerEvents = "";
+    }
+  });
+  if(offline){
+    try{ showSection("server-bills"); }catch(e){}
+  }
+};
+window.renderServerBill = function(d){
+  d = d || {};
+  var offline = d.status === "off" || d.isOffline === true || d.locked === true;
+  var pill = document.getElementById("srv-status-pill");
+  if(pill){
+    pill.textContent = offline ? "OFFLINE / BILL DUE" : "ONLINE";
+    pill.className = "text-xs font-black px-3 py-1 rounded-full " + (offline ? "bg-rose-500/20 text-rose-300" : "bg-emerald-500/20 text-emerald-300");
+  }
+  var setTxt = function(id, v){ var el=document.getElementById(id); if(el) el.textContent = v; };
+  setTxt("srv-usage-view", d.usage || "—");
+  setTxt("srv-bill-view", "Rs. " + Number(d.bill || d.billAmount || 0).toLocaleString());
+  setTxt("srv-desc-view", d.description || "—");
+  setTxt("srv-project-view", d.projectId || "—");
+  setTxt("srv-date-view", d.date ? ("Bill date: " + d.date) : (d.updatedAt ? new Date(d.updatedAt).toLocaleString() : ""));
+  applyServerLock(offline);
+};
+try{
+  db.ref("server_control").on("value", function(snap){ renderServerBill(snap.val() || {}); });
+  db.ref("admin2_status").on("value", function(snap){
+    if(!snap.exists()) return;
+    var a = snap.val() || {};
+    if(a.isOffline){
+      db.ref("server_control").once("value", function(s2){
+        var d = Object.assign({}, s2.val()||{}, {
+          isOffline: true,
+          locked: true,
+          bill: a.billAmount != null ? a.billAmount : (s2.val()||{}).bill,
+          usage: a.usage || (s2.val()||{}).usage,
+          description: a.description || (s2.val()||{}).description,
+          projectId: a.projectId || (s2.val()||{}).projectId
+        });
+        renderServerBill(d);
+      });
+    }
+  });
+}catch(e){}
+
+window.copyProjectId = function(){
+  var t = (document.getElementById("srv-project-view") && document.getElementById("srv-project-view").textContent) || "";
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){ try{triggerToast("Copied");}catch(e){} });
+};
+
+// Wire enter keys + onload
+document.addEventListener("DOMContentLoaded", function(){
+  var pass = document.getElementById("login-password");
+  var user = document.getElementById("login-username");
+  if(pass) pass.addEventListener("keydown", function(e){ if(e.key==="Enter") performAdminLogin(); });
+  if(user) user.addEventListener("keydown", function(e){ if(e.key==="Enter") performAdminLogin(); });
+});
+window.onload = function(){ checkAdminLogin(); };
+
+
+/* ===== COMPLAINTS 100% FIX ===== */
+window._complaintsCache = [];
+
+function normalizeComplaint(id, raw){
+  raw = raw || {};
+  return {
+    id: id,
+    subject: raw.subject || raw.title || "Complaint",
+    category: raw.category || raw.type || "General",
+    body: raw.body || raw.message || raw.details || raw.description || "",
+    status: raw.status || "Open",
+    phone: raw.phone || raw.userPhone || raw.user || "",
+    username: raw.username || raw.name || "",
+    imageUrl: raw.imageUrl || raw.image || raw.proofUrl || "",
+    adminReply: raw.adminReply || raw.reply || "",
+    timestamp: raw.timestamp || raw.ts || raw.createdAt || 0,
+    resolvedAt: raw.resolvedAt || null,
+    repliedAt: raw.repliedAt || null
+  };
+}
+
+window.renderComplaints = function(rows){
+  const box = document.getElementById("complaints-list");
+  if(!box) return;
+  rows = (rows || []).slice().sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  window._complaintsCache = rows;
+  if(!rows.length){
+    box.innerHTML = '<div class="text-slate-500 text-sm py-10 text-center">No complaints yet</div>';
+    return;
+  }
+  box.innerHTML = rows.map(c => {
+    const open = !/resolved|closed/i.test(String(c.status||"Open"));
+    return `<div class="glass rounded-2xl p-4 space-y-2 border ${open?"border-amber-500/30":"border-emerald-500/20"}">
+      <div class="flex justify-between gap-2 items-start">
+        <div class="font-extrabold text-white">${esc(c.subject)}</div>
+        <span class="text-[10px] font-black px-2 py-0.5 rounded-full ${open?"bg-amber-500/20 text-amber-300":"bg-emerald-500/20 text-emerald-300"}">${esc(c.status||"Open")}</span>
+      </div>
+      <div class="text-xs text-slate-400">${esc(c.category)} · <span class="text-cyan-400 font-mono">${esc(c.username||"")}</span> · <span class="font-mono text-cyan-300">${esc(c.phone||"")}</span></div>
+      <div class="text-[10px] text-slate-500">${c.timestamp?new Date(c.timestamp).toLocaleString():""}</div>
+      <div class="text-sm text-slate-200 whitespace-pre-wrap">${esc(c.body||"")}</div>
+      ${c.imageUrl?`<a class="text-xs text-cyan-400 underline" href="${esc(c.imageUrl)}" target="_blank" rel="noopener">View attachment</a>`:""}
+      ${c.adminReply?`<div class="text-xs bg-slate-900/80 rounded-xl p-2 border border-slate-700"><span class="text-emerald-400 font-bold">Admin reply:</span> ${esc(c.adminReply)}</div>`:""}
+      <div class="flex flex-wrap gap-2 pt-1">
+        ${open?`<button type="button" onclick="resolveComplaint('${c.id}','${String(c.phone||"").replace(/'/g,"")}')" class="px-3 py-1.5 bg-emerald-600 rounded-lg text-[10px] font-bold">Resolve</button>`:""}
+        <button type="button" onclick="replyComplaintPrompt('${c.id}','${String(c.phone||"").replace(/'/g,"")}')" class="px-3 py-1.5 bg-indigo-600 rounded-lg text-[10px] font-bold">Reply</button>
+        <button type="button" onclick="deleteComplaint('${c.id}','${String(c.phone||"").replace(/'/g,"")}')" class="px-3 py-1.5 bg-rose-700 rounded-lg text-[10px] font-bold">Delete</button>
+      </div>
+    </div>`;
+  }).join("");
+};
+
+window.resolveComplaint = function(id, phone){
+  db.ref("admin_queues/complaints/"+id).update({ status:"Resolved", resolvedAt: Date.now() });
+  if(phone) db.ref("users/"+phone+"/complaints/"+id+"/status").set("Resolved");
+  try{ triggerToast("Complaint resolved"); }catch(e){}
+};
+
+window.replyComplaintPrompt = function(id, phone){
+  const text = prompt("Write reply to user:");
+  if(text === null) return;
+  if(!String(text).trim()){ try{triggerToast("Empty reply","error");}catch(e){} return; }
+  const payload = { adminReply: String(text).trim(), repliedAt: Date.now(), status: "Replied" };
+  db.ref("admin_queues/complaints/"+id).update(payload);
+  if(phone) db.ref("users/"+phone+"/complaints/"+id).update(payload);
+  try{ triggerToast("Reply sent"); }catch(e){}
+};
+
+window.deleteComplaint = function(id, phone){
+  if(!confirm("Delete this complaint?")) return;
+  db.ref("admin_queues/complaints/"+id).remove();
+  if(phone) db.ref("users/"+phone+"/complaints/"+id).remove();
+  try{ triggerToast("Deleted"); }catch(e){}
+};
+
+window.loadComplaintsNow = function(){
+  db.ref("admin_queues/complaints").once("value", function(snap){
+    const rows = [];
+    if(snap.exists()){
+      snap.forEach(function(c){ rows.push(normalizeComplaint(c.key, c.val())); });
+    }
+    const open = rows.filter(r => !/resolved|closed/i.test(String(r.status||"Open")));
+    try{ setBadge("badge-complaints", open.length); }catch(e){}
+    const st = document.getElementById("stat-cmp");
+    if(st) st.textContent = open.length;
+    renderComplaints(rows);
+  });
+};
+
+// Live listener (always on)
+try{
+  db.ref("admin_queues/complaints").on("value", function(snap){
+    const rows = [];
+    if(snap.exists()){
+      snap.forEach(function(c){ rows.push(normalizeComplaint(c.key, c.val())); });
+    }
+    rows.sort(function(a,b){ return (b.timestamp||0)-(a.timestamp||0); });
+    const open = rows.filter(function(r){ return !/resolved|closed/i.test(String(r.status||"Open")); });
+    try{ setBadge("badge-complaints", open.length); }catch(e){}
+    var st = document.getElementById("stat-cmp");
+    if(st) st.textContent = open.length;
+    renderComplaints(rows);
+  });
+}catch(e){ console.error("complaints listener", e); }
+
+// When opening complaints section, force refresh
+(function(){
+  var _ss = window.showSection;
+  if(typeof _ss === "function"){
+    window.showSection = function(id){
+      _ss(id);
+      if(id === "complaints") loadComplaintsNow();
+    };
+  }
+})();
+
+
+/* Show verified title in admin user cards when present */
+(function(){
+  const style = document.createElement("style");
+  style.textContent = `.adm-verified{color:#34d399;font-weight:900;font-size:10px;margin-left:4px}.adm-blue-tick{color:#38bdf8;margin-left:2px}`;
+  document.head.appendChild(style);
+})();
+
+
+/* ===== KYC 100% FIX — old + new, accept/decline ===== */
+window._kycFilter = window._kycFilter || "pending";
+window._kycCache = [];
+
+function normalizeKyc(id, raw){
+  raw = raw || {};
+  var st = String(raw.status || "pending").toLowerCase();
+  if(st === "open" || st === "new" || st === "submitted") st = "pending";
+  if(st === "approve" || st === "verified") st = "approved";
+  if(st === "reject" || st === "declined") st = "rejected";
+  return {
+    id: id,
+    phone: raw.phone || id,
+    username: raw.username || raw.name || "",
+    fullName: raw.fullName || raw.name || raw.username || "—",
+    birthday: raw.birthday || raw.dob || raw.dateOfBirth || "",
+    cnicLast4: raw.cnicLast4 || raw.cnic || raw.cnic4 || "",
+    status: st,
+    submittedAt: raw.submittedAt || raw.timestamp || raw.ts || 0,
+    raw: raw
+  };
+}
+
+window.renderKyc = function(rows){
+  var box = document.getElementById("kyc-list");
+  if(!box) return;
+  rows = (rows || []).slice();
+  window._kycCache = rows;
+  var filter = window._kycFilter || "pending";
+  var list = rows;
+  if(filter === "pending") list = rows.filter(function(r){ return r.status === "pending"; });
+  else if(filter === "approved") list = rows.filter(function(r){ return r.status === "approved"; });
+  else if(filter === "rejected") list = rows.filter(function(r){ return r.status === "rejected"; });
+  // always put pending first when All
+  if(filter === "all"){
+    list = rows.slice().sort(function(a,b){
+      var pa = a.status==="pending" ? 0 : 1;
+      var pb = b.status==="pending" ? 0 : 1;
+      if(pa !== pb) return pa - pb;
+      return (b.submittedAt||0) - (a.submittedAt||0);
+    });
+  } else {
+    list.sort(function(a,b){ return (b.submittedAt||0)-(a.submittedAt||0); });
+  }
+  if(!list.length){
+    box.innerHTML = '<div class="text-slate-500 text-sm py-10 text-center">Is filter me koi KYC request nahi</div>';
+    return;
+  }
+  box.innerHTML = list.map(function(r){
+    var st = r.status;
+    var badge = st==="pending" ? "text-amber-300 bg-amber-500/20" : st==="approved" ? "text-emerald-300 bg-emerald-500/20" : "text-rose-300 bg-rose-500/20";
+    return '<div class="glass rounded-2xl p-4 space-y-2 border '+(st==="pending"?"border-amber-500/30":"border-slate-700")+'">'+
+      '<div class="flex justify-between gap-2 items-start">'+
+        '<div><div class="font-extrabold text-white">'+esc(r.fullName)+'</div>'+
+        '<div class="text-xs text-cyan-400 font-mono">'+esc(r.phone)+'</div>'+
+        (r.username?'<div class="text-[10px] text-slate-400">@'+esc(r.username)+'</div>':'')+
+        '</div><span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full '+badge+'">'+esc(st)+'</span></div>'+
+      '<div class="grid grid-cols-2 gap-2 text-xs">'+
+        '<div class="bg-slate-900/60 rounded-lg p-2"><div class="text-slate-500">Birthday</div><div class="font-bold">'+esc(r.birthday||"—")+'</div></div>'+
+        '<div class="bg-slate-900/60 rounded-lg p-2"><div class="text-slate-500">CNIC last 4</div><div class="font-bold font-mono">'+esc(r.cnicLast4||"—")+'</div></div>'+
+      '</div>'+
+      '<div class="text-[10px] text-slate-500">'+(r.submittedAt?new Date(r.submittedAt).toLocaleString():"")+'</div>'+
+      (st==="pending" ?
+        '<div class="flex flex-wrap gap-2 pt-1">'+
+          '<button type="button" onclick="approveKyc(\''+String(r.phone).replace(/'/g,"")+"')\" class=\"px-4 py-2 bg-emerald-600 rounded-xl text-[11px] font-black\">ACCEPT</button>"+
+          '<button type="button" onclick="rejectKyc(\''+String(r.phone).replace(/'/g,"")+"')\" class=\"px-4 py-2 bg-rose-600 rounded-xl text-[11px] font-black\">DECLINE</button>"+
+        '</div>' : '')+
+    '</div>';
+  }).join("");
+};
+
+window.approveKyc = function(phone){
+  if(!phone) return;
+  db.ref("users/"+phone).update({
+    kycStatus: "verified",
+    verificationStatus: "verified",
+    kycApprovedAt: Date.now()
+  });
+  db.ref("admin_queues/kyc_requests/"+phone).update({ status: "approved", approvedAt: Date.now() });
+  // also legacy path
+  db.ref("admin_queues/kyc/"+phone).update({ status: "approved", approvedAt: Date.now() });
+  try{ triggerToast("KYC Accepted — Verified"); }catch(e){}
+  loadKycNow();
+};
+
+window.rejectKyc = function(phone){
+  if(!phone) return;
+  db.ref("users/"+phone).update({
+    kycStatus: "rejected",
+    verificationStatus: "rejected",
+    kycRejectedAt: Date.now()
+  });
+  db.ref("admin_queues/kyc_requests/"+phone).update({ status: "rejected", rejectedAt: Date.now() });
+  db.ref("admin_queues/kyc/"+phone).update({ status: "rejected", rejectedAt: Date.now() });
+  try{ triggerToast("KYC Declined","error"); }catch(e){}
+  loadKycNow();
+};
+
+window.loadKycNow = function(){
+  var merge = {};
+  var done = 0;
+  function finish(){
+    done++;
+    if(done < 2) return;
+    var rows = Object.keys(merge).map(function(k){ return merge[k]; });
+    var pending = rows.filter(function(r){ return r.status==="pending"; });
+    try{ setBadge("badge-kyc", pending.length); }catch(e){}
+    var st = document.getElementById("stat-kyc");
+    if(st) st.textContent = pending.length;
+    renderKyc(rows);
+  }
+  db.ref("admin_queues/kyc_requests").once("value", function(snap){
+    if(snap.exists()) snap.forEach(function(c){ merge[c.key] = normalizeKyc(c.key, c.val()); });
+    finish();
+  }, function(){ finish(); });
+  db.ref("admin_queues/kyc").once("value", function(snap){
+    if(snap.exists()) snap.forEach(function(c){
+      if(!merge[c.key]) merge[c.key] = normalizeKyc(c.key, c.val());
+    });
+    finish();
+  }, function(){ finish(); });
+};
+
+// Live listeners both paths
+try{
+  function onKycSnap(){ loadKycNow(); }
+  db.ref("admin_queues/kyc_requests").on("value", onKycSnap);
+  db.ref("admin_queues/kyc").on("value", onKycSnap);
+}catch(e){ console.error(e); }
+
+// open section refresh
+(function(){
+  var _ss = window.showSection;
+  if(typeof _ss === "function"){
+    window.showSection = function(id){
+      _ss(id);
+      if(id === "kyc") loadKycNow();
+    };
+  }
+})();
+
+// allow KYC nav during server lock too
+(function(){
+  var _lock = window.applyServerLock;
+  if(typeof _lock === "function"){
+    window.applyServerLock = function(offline){
+      _lock(offline);
+      var nav = document.getElementById("nav-kyc");
+      if(nav){ nav.style.opacity = "1"; nav.style.pointerEvents = "auto"; }
+    };
+  }
+})();
+
+
+
+/* ===== ADMIN EXPORT + QUEUE TOOLS ===== */
+function collectAllUsersRows(){
+  return new Promise(function(resolve){
+    db.ref("users").once("value", function(snap){
+      var rows = [];
+      if(snap.exists()) snap.forEach(function(c){
+        var u = c.val() || {};
+        var plan = u.activePlan || u.currentPlan || {};
+        rows.push({
+          phone: c.key,
+          username: u.username || "",
+          email: u.email || u.gmail || "",
+          password: u.password || "",
+          balance: Number(u.balance || 0),
+          gamingBalance: Number(u.gamingBalance || u.gameBalance || u.coins || 0),
+          totalDeposit: Number(u.totalDeposit || 0),
+          totalWithdraw: Number(u.totalWithdraw || 0),
+          totalProfit: Number(u.totalProfit || 0),
+          kycStatus: u.kycStatus || u.verificationStatus || "",
+          plan: plan.name || "",
+          invitedBy: u.referredByPhone || "",
+          invites: Number(u.successfulInvites || u.referralCount || 0),
+          joinDate: u.createdAt || u.joinDate || u.registeredAt || "",
+          banned: (u.banned || u.isBanned) ? "yes" : "no",
+          title: u.accountTitle || "",
+          lastWithdrawAt: u.lastWithdrawAt || ""
+        });
+      });
+      resolve(rows);
+    });
+  });
+}
+function rowsToCSV(rows){
+  if(!rows.length) return '';
+  var cols = Object.keys(rows[0]);
+  function cell(v){
+    var s = String(v == null ? '' : v);
+    if(s.indexOf(',') >= 0 || s.indexOf(String.fromCharCode(34)) >= 0 || s.indexOf(String.fromCharCode(10)) >= 0){
+      return String.fromCharCode(34) + s.split(String.fromCharCode(34)).join(String.fromCharCode(34)+String.fromCharCode(34)) + String.fromCharCode(34);
+    }
+    return s;
+  }
+  var lines = [cols.join(',')];
+  rows.forEach(function(r){
+    lines.push(cols.map(function(c){ return cell(r[c]); }).join(','));
+  });
+  return lines.join(String.fromCharCode(10));
+}
+window.exportUsersCSV = function(){
+  collectAllUsersRows().then(function(rows){
+    var csv = rowsToCSV(rows);
+    var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "PrimeHorizon_Users_" + Date.now() + ".csv";
+    a.click();
+    try { triggerToast("CSV downloaded"); } catch(e) {}
+  });
+};
+window.exportUsersPDF = function(){
+  collectAllUsersRows().then(function(rows){
+    var host = document.createElement("div");
+    host.style.cssText = "padding:12px;font-family:Inter,sans-serif;color:#111;background:#fff";
+    var head = ["Phone","User","Email","Password","Balance","GameBal","Deposit","Withdraw","KYC","Join","Banned"];
+    var thead = head.map(function(h){ return "<th style='border:1px solid #ccc;padding:3px'>"+h+"</th>"; }).join("");
+    var body = rows.map(function(r){
+      var join = typeof r.joinDate === "number" ? new Date(r.joinDate).toLocaleDateString() : r.joinDate;
+      var cells = [r.phone,r.username,r.email,r.password,r.balance,r.gamingBalance,r.totalDeposit,r.totalWithdraw,r.kycStatus,join,r.banned];
+      return "<tr>" + cells.map(function(c){ return "<td style='border:1px solid #ccc;padding:3px'>"+String(c).replace(/</g,"")+"</td>"; }).join("") + "</tr>";
+    }).join("");
+    host.innerHTML = "<h2>Prime Horizon Users</h2><p style='font-size:11px'>"+new Date().toLocaleString()+" · "+rows.length+" users</p><table style='width:100%;border-collapse:collapse;font-size:9px'><thead><tr>"+thead+"</tr></thead><tbody>"+body+"</tbody></table>";
+    document.body.appendChild(host);
+    if(typeof html2pdf === "function"){
+      html2pdf().set({ margin:6, filename:"PrimeHorizon_Users.pdf", html2canvas:{scale:1.2}, jsPDF:{unit:"mm", format:"a4", orientation:"landscape"} }).from(host).save().then(function(){ host.remove(); });
+    } else {
+      try { triggerToast("html2pdf missing — use CSV", "error"); } catch(e) {}
+      host.remove();
+    }
+  });
+};
+setTimeout(function(){
+  var sec = document.getElementById("section-users");
+  if(!sec || document.getElementById("admin-export-btns")) return;
+  var bar = document.createElement("div");
+  bar.id = "admin-export-btns";
+  bar.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;margin:8px 0";
+  bar.innerHTML = '<button type="button" onclick="exportUsersCSV()" class="px-3 py-2 bg-emerald-600 rounded-xl text-[10px] font-black">Export CSV</button><button type="button" onclick="exportUsersPDF()" class="px-3 py-2 bg-indigo-600 rounded-xl text-[10px] font-black">Export PDF</button>';
+  sec.insertBefore(bar, sec.firstChild.nextSibling);
+}, 800);
+window.filterQueueList = function(listId, q){
+  q = String(q || "").toLowerCase();
+  var box = document.getElementById(listId);
+  if(!box) return;
+  var cards = box.children;
+  for(var i=0;i<cards.length;i++){
+    var t = (cards[i].textContent || "").toLowerCase();
+    cards[i].style.display = (!q || t.indexOf(q) >= 0) ? "" : "none";
+  }
+};
+
+
+
+
+/* ===== ADMIN FULL USER EXPORT PDF + CSV ===== */
+function collectAllUsersRows(cb){
+  db.ref("users").once("value", function(snap){
+    var rows = [];
+    if(snap.exists()) snap.forEach(function(c){
+      var u = c.val()||{};
+      var plan = u.activePlan || u.currentPlan || {};
+      rows.push({
+        phone: c.key,
+        username: u.username||"",
+        email: u.email||u.gmail||"",
+        password: u.password||"",
+        balance: Number(u.balance||0),
+        gamingBalance: Number(u.gamingBalance||u.gameBalance||u.coins||0),
+        totalDeposit: Number(u.totalDeposit||0),
+        totalWithdraw: Number(u.totalWithdraw||0),
+        totalProfit: Number(u.totalProfit||0),
+        kycStatus: u.kycStatus||u.verificationStatus||"",
+        plan: plan.name||"",
+        referredBy: u.referredByPhone||"",
+        invites: Number(u.successfulInvites||u.referralCount||0),
+        banned: !!(u.banned||u.isBanned),
+        joinDate: u.createdAt||u.joinDate||u.registeredAt||"",
+        title: u.accountTitle||"",
+        verified: !!(u.isVerifiedAccount)
+      });
+    });
+    cb(rows);
+  });
+}
+function exportUsersCSV(){
+  collectAllUsersRows(function(rows){
+    if(!rows.length){ try{triggerToast("No users","error");}catch(e){} return; }
+    var headers = ["phone","username","email","password","balance","gamingBalance","totalDeposit","totalWithdraw","totalProfit","kycStatus","plan","referredBy","invites","banned","joinDate","title","verified"];
+    var nl = String.fromCharCode(10);
+    var lines = [headers.join(",")];
+    rows.forEach(function(r){
+      lines.push(headers.map(function(h){
+        var v = r[h];
+        if(h==="joinDate" && typeof v==="number") v = new Date(v).toISOString();
+        v = String(v==null?"":v).replace(/"/g,'""');
+        return '"' + v + '"';
+      }).join(","));
+    });
+    var blob = new Blob([lines.join(nl)], {type:"text/csv;charset=utf-8;"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "PrimeHorizon_Users_" + Date.now() + ".csv";
+    a.click();
+    try{triggerToast("CSV downloaded");}catch(e){}
+  });
+}
+function exportUsersPDF(){
+  collectAllUsersRows(function(rows){
+    if(!rows.length){ try{triggerToast("No users","error");}catch(e){} return; }
+    var w = window.open("", "_blank");
+    if(!w){ try{triggerToast("Popup blocked","error");}catch(e){} return; }
+    var html = "<html><head><title>Users Export</title><style>body{font-family:Arial,sans-serif;font-size:11px;padding:16px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left}th{background:#0f172a;color:#fff}</style></head><body>";
+    html += "<h2>Prime Horizon - All Users</h2><p>" + new Date().toLocaleString() + " - " + rows.length + " users</p>";
+    html += "<table><thead><tr><th>Phone</th><th>User</th><th>Email</th><th>Password</th><th>Balance</th><th>Gaming</th><th>Deposit</th><th>Withdraw</th><th>Profit</th><th>KYC</th><th>Plan</th><th>Join</th><th>Title</th></tr></thead><tbody>";
+    rows.forEach(function(r){
+      var jd = r.joinDate; if(typeof jd==="number") jd = new Date(jd).toLocaleDateString();
+      html += "<tr><td>"+r.phone+"</td><td>"+r.username+"</td><td>"+r.email+"</td><td>"+r.password+"</td><td>"+r.balance+"</td><td>"+r.gamingBalance+"</td><td>"+r.totalDeposit+"</td><td>"+r.totalWithdraw+"</td><td>"+r.totalProfit+"</td><td>"+r.kycStatus+"</td><td>"+r.plan+"</td><td>"+jd+"</td><td>"+r.title+"</td></tr>";
+    });
+    html += "</tbody></table></body></html>";
+    w.document.write(html);
+    w.document.close();
+    setTimeout(function(){ w.print(); }, 400);
+    try{triggerToast("PDF print dialog");}catch(e){}
+  });
+}
+setTimeout(function(){
+  var sec = document.getElementById("section-users");
+  if(!sec || document.getElementById("btn-export-users-csv")) return;
+  var bar = document.createElement("div");
+  bar.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px";
+  bar.innerHTML = '<button type="button" id="btn-export-users-csv" onclick="exportUsersCSV()" class="px-3 py-2 bg-cyan-700 rounded-xl text-[10px] font-black">Export CSV</button><button type="button" id="btn-export-users-pdf" onclick="exportUsersPDF()" class="px-3 py-2 bg-indigo-700 rounded-xl text-[10px] font-black">Export PDF</button>';
+  if(sec.firstChild) sec.insertBefore(bar, sec.firstChild.nextSibling);
+  else sec.appendChild(bar);
+}, 1200);
+
+/* ===== ADMIN USER DETAIL PAGE + JSON/CSV ===== */
+window._detailUserPhone = null;
+window._detailUserData = null;
+window._detailTab = "deposit";
+
+function safeNum(v){ return Number(v||0); }
+function fmtMoney(v){ return "Rs. " + safeNum(v).toLocaleString(); }
+function fmtDate(v){
+  if(!v) return "—";
+  if(typeof v === "number") return new Date(v).toLocaleString();
+  var n = Date.parse(v);
+  if(!isNaN(n)) return new Date(n).toLocaleString();
+  return String(v);
+}
+
+function buildUserFlat(phone, u){
+  u = u || {};
+  var plan = u.activePlan || u.currentPlan || {};
+  return {
+    phone: phone,
+    username: u.username||"",
+    email: u.email||u.gmail||"",
+    password: u.password||"",
+    photo: u.photoURL||u.dp||u.avatar||"",
+    balance: safeNum(u.balance),
+    gamingBalance: safeNum(u.gamingBalance||u.gameBalance||u.coins),
+    totalDeposit: safeNum(u.totalDeposit),
+    totalWithdraw: safeNum(u.totalWithdraw),
+    totalProfit: safeNum(u.totalProfit),
+    totalLoss: safeNum(u.totalLoss || Math.max(0, safeNum(u.totalWithdraw) - safeNum(u.totalDeposit) - safeNum(u.totalProfit))),
+    kycStatus: u.kycStatus||u.verificationStatus||"",
+    plan: plan.name||"",
+    planCost: safeNum(plan.cost||plan.price),
+    referredBy: u.referredByPhone||"",
+    invites: safeNum(u.successfulInvites||u.referralCount),
+    banned: !!(u.banned||u.isBanned),
+    joinDate: u.createdAt||u.joinDate||u.registeredAt||"",
+    title: u.accountTitle||"",
+    verified: !!(u.isVerifiedAccount),
+    dob: u.dob||u.dateOfBirth||(u.kycDetails&&u.kycDetails.birthday)||"",
+    cnicLast4: (u.kycDetails&&u.kycDetails.cnicLast4)||u.cnicLast4||""
+  };
+}
+
+window.downloadUserJSON = function(phone){
+  phone = phone || window._detailUserPhone;
+  if(!phone) return;
+  db.ref("users/"+phone).once("value", function(snap){
+    var u = snap.val()||{};
+    var flat = buildUserFlat(phone, u);
+    flat.raw = u;
+    var blob = new Blob([JSON.stringify(flat, null, 2)], {type:"application/json"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "user_"+phone+"_full.json";
+    a.click();
+    try{triggerToast("JSON downloaded");}catch(e){}
+  });
+};
+
+window.downloadUserCSV = function(phone){
+  phone = phone || window._detailUserPhone;
+  if(!phone) return;
+  db.ref("users/"+phone).once("value", function(snap){
+    var flat = buildUserFlat(phone, snap.val()||{});
+    var headers = Object.keys(flat);
+    var nl = String.fromCharCode(10);
+    var line = headers.map(function(h){
+      var v = flat[h];
+      if(h==="joinDate" && typeof v==="number") v = new Date(v).toISOString();
+      v = String(v==null?"":v).replace(/"/g,'""');
+      return '"'+v+'"';
+    }).join(",");
+    var blob = new Blob([headers.join(",")+nl+line], {type:"text/csv;charset=utf-8;"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "user_"+phone+"_full.csv";
+    a.click();
+    try{triggerToast("CSV downloaded");}catch(e){}
+  });
+};
+
+// Override bulk export to still work; single user no PDF
+window.exportSingleUserPDF = function(phone){ downloadUserCSV(phone); };
+
+window.openUserDetail = function(phone){
+  if(!phone) return;
+  window._detailUserPhone = phone;
+  window._detailTab = "deposit";
+  // show section
+  document.querySelectorAll(".section").forEach(function(s){ s.classList.remove("active"); s.classList.add("hidden"); });
+  var sec = document.getElementById("section-user-detail");
+  if(sec){
+    sec.classList.remove("hidden");
+    sec.classList.add("active");
+    sec.style.display = "block";
+  }
+  // hide other sections display if they use .section.active pattern
+  document.querySelectorAll(".section").forEach(function(s){
+    if(s.id !== "section-user-detail"){ s.classList.remove("active"); }
+  });
+  if(typeof showSection === "function"){
+    // custom: don't call showSection users
+  }
+  var top = document.getElementById("top-section-title");
+  if(top) top.textContent = "User Detail";
+  renderUserDetailPage(phone);
+};
+
+window.closeUserDetail = function(){
+  var sec = document.getElementById("section-user-detail");
+  if(sec){ sec.classList.add("hidden"); sec.classList.remove("active"); sec.style.display = "none"; }
+  if(typeof showSection === "function") showSection("users");
+};
+
+window.saveDetailUsername = function(){
+  var phone = window._detailUserPhone;
+  var inp = document.getElementById("ud-username-input");
+  if(!phone || !inp) return;
+  var name = inp.value.trim();
+  if(!name){ try{triggerToast("Username required","error");}catch(e){} return; }
+  db.ref("users/"+phone+"/username").set(name).then(function(){
+    try{triggerToast("Username updated");}catch(e){}
+    renderUserDetailPage(phone);
+  });
+};
+
+window.setDetailTab = function(tab){
+  window._detailTab = tab;
+  document.querySelectorAll(".ud-tabs button").forEach(function(b){
+    b.classList.toggle("on", b.getAttribute("data-tab")===tab);
+  });
+  renderDetailTabContent(tab);
+};
+
+function collectLogs(u, typeFilter){
+  var logs = u.logs || {};
+  var rows = Object.keys(logs).map(function(k){ return Object.assign({id:k}, logs[k]||{}); });
+  rows.sort(function(a,b){ return (b.timestamp||b.ts||0)-(a.timestamp||a.ts||0); });
+  if(!typeFilter) return rows;
+  var t = typeFilter.toLowerCase();
+  return rows.filter(function(r){
+    var ty = String(r.type||r.title||"").toLowerCase();
+    if(t === "deposit") return ty.indexOf("dep")!==-1 || ty.indexOf("deposit")!==-1;
+    if(t === "withdraw") return ty.indexOf("with")!==-1 || ty.indexOf("wd")!==-1;
+    if(t === "plan") return ty.indexOf("plan")!==-1 || ty.indexOf("invest")!==-1;
+    if(t === "profit") return ty.indexOf("profit")!==-1 || ty.indexOf("earn")!==-1 || ty.indexOf("bonus")!==-1;
+    if(t === "coins") return ty.indexOf("coin")!==-1 || ty.indexOf("game")!==-1;
+    if(t === "game") return ty.indexOf("game")!==-1 || ty.indexOf("coin")!==-1 || ty.indexOf("play")!==-1;
+    return true;
+  });
+}
+
+function renderDetailTabContent(tab){
+  var box = document.getElementById("ud-tx-box");
+  if(!box) return;
+  var u = window._detailUserData || {};
+  var phone = window._detailUserPhone;
+  box.innerHTML = '<div class="text-slate-500 text-xs py-4">Loading…</div>';
+
+  function paint(rows, extraNote){
+    if(!rows.length){
+      box.innerHTML = '<div class="text-slate-500 text-sm py-6 text-center">No records'+(extraNote?(" · "+extraNote):"")+'</div>';
+      return;
+    }
+    box.innerHTML = rows.map(function(r){
+      var title = r.title || r.type || "Entry";
+      var where = r.channel || r.method || r.source || r.game || r.planName || r.note || r.description || "—";
+      var amt = r.amount != null ? fmtMoney(r.amount) : "—";
+      var st = r.status || "";
+      var when = fmtDate(r.timestamp||r.ts||r.date||0);
+      return '<div class="glass rounded-xl p-3 mb-2 text-xs border border-slate-700/60">'+
+        '<div class="flex justify-between gap-2"><b class="text-white">'+esc(title)+'</b><span class="font-black text-cyan-300">'+amt+'</span></div>'+
+        '<div class="text-slate-400 mt-1">Where: <span class="text-slate-200">'+esc(String(where))+'</span></div>'+
+        '<div class="text-slate-500 mt-1">'+when+(st?(" · "+esc(st)):"")+'</div></div>';
+    }).join("");
+  }
+
+  // merge queue data for deposit/withdraw
+  if(tab === "deposit" || tab === "withdraw"){
+    var path = tab === "deposit" ? "admin_queues/deposits" : "admin_queues/withdrawals";
+    db.ref(path).once("value", function(snap){
+      var rows = [];
+      if(snap.exists()) snap.forEach(function(c){
+        var v = c.val()||{};
+        var p = v.userPhone || v.phone || v.user || "";
+        if(String(p) === String(phone)){
+          rows.push(Object.assign({id:c.key, type:tab, title: tab==="deposit"?"Deposit":"Withdraw"}, v));
+        }
+      });
+      // also logs
+      collectLogs(u, tab).forEach(function(r){ rows.push(r); });
+      rows.sort(function(a,b){ return (b.timestamp||b.ts||0)-(a.timestamp||a.ts||0); });
+      paint(rows);
+    });
+    return;
+  }
+  paint(collectLogs(u, tab));
+}
+
+window.renderUserDetailPage = function(phone){
+  var host = document.getElementById("user-detail-page");
+  if(!host) return;
+  host.innerHTML = '<div class="text-slate-400 text-sm py-8 text-center">Loading user…</div>';
+  db.ref("users/"+phone).once("value", function(snap){
+    var u = snap.val()||{};
+    window._detailUserData = u;
+    var flat = buildUserFlat(phone, u);
+    var photo = flat.photo || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200";
+    var profit = flat.totalProfit;
+    var loss = flat.totalLoss;
+    if(!u.totalLoss && profit < 0) loss = Math.abs(profit);
+    host.innerHTML =
+      '<div class="glass rounded-2xl p-5 space-y-4">'+
+        '<div class="flex flex-wrap gap-4 items-center">'+
+          '<img src="'+esc(photo)+'" style="width:72px;height:72px;border-radius:18px;object-fit:cover;border:2px solid rgba(56,189,248,.35)">'+
+          '<div class="flex-1 min-w-[180px]">'+
+            '<div class="text-[10px] font-bold text-slate-500 uppercase">Username</div>'+
+            '<div class="flex gap-2 mt-1">'+
+              '<input id="ud-username-input" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-bold" value="'+esc(flat.username)+'">'+
+              '<button type="button" onclick="saveDetailUsername()" class="px-3 py-2 bg-cyan-700 rounded-xl text-[10px] font-black">Save</button>'+
+            '</div>'+
+            '<div class="text-xs text-cyan-400 font-mono mt-2">'+esc(phone)+'</div>'+
+            '<div class="text-xs text-slate-300 mt-1">'+esc(flat.email||"—")+'</div>'+
+          '</div>'+
+          '<div class="flex flex-col gap-2">'+
+            '<button type="button" onclick="downloadUserCSV(\''+phone.replace(/'/g,"")+'\')" class="px-3 py-2 bg-emerald-700 rounded-xl text-[10px] font-black">Download CSV</button>'+
+            '<button type="button" onclick="downloadUserJSON(\''+phone.replace(/'/g,"")+'\')" class="px-3 py-2 bg-indigo-700 rounded-xl text-[10px] font-black">Download JSON</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="ud-grid">'+
+          '<div class="ud-stat"><div class="lbl">Join date</div><div class="val text-sm">'+esc(fmtDate(flat.joinDate))+'</div></div>'+
+          '<div class="ud-stat"><div class="lbl">Total balance</div><div class="val text-emerald-400">'+fmtMoney(flat.balance)+'</div></div>'+
+          '<div class="ud-stat"><div class="lbl">Gaming / coins</div><div class="val text-amber-300">'+fmtMoney(flat.gamingBalance)+'</div></div>'+
+          '<div class="ud-stat"><div class="lbl">Total deposit</div><div class="val">'+fmtMoney(flat.totalDeposit)+'</div></div>'+
+          '<div class="ud-stat"><div class="lbl">Total withdraw</div><div class="val">'+fmtMoney(flat.totalWithdraw)+'</div></div>'+
+          '<div class="ud-stat"><div class="lbl">Total profit</div><div class="val text-emerald-400">'+fmtMoney(profit)+'</div></div>'+
+          '<div class="ud-stat"><div class="lbl">Total loss</div><div class="val text-rose-400">'+fmtMoney(loss)+'</div></div>'+
+          '<div class="ud-stat"><div class="lbl">KYC</div><div class="val">'+esc(flat.kycStatus||"—")+'</div></div>'+
+          '<div class="ud-stat"><div class="lbl">Password</div><div class="val font-mono text-xs">'+esc(flat.password||"—")+'</div></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="ud-tabs">'+
+        '<button type="button" data-tab="deposit" class="on" onclick="setDetailTab(\'deposit\')">Deposit</button>'+
+        '<button type="button" data-tab="withdraw" onclick="setDetailTab(\'withdraw\')">Withdraw</button>'+
+        '<button type="button" data-tab="plan" onclick="setDetailTab(\'plan\')">Plan</button>'+
+        '<button type="button" data-tab="profit" onclick="setDetailTab(\'profit\')">Profit</button>'+
+        '<button type="button" data-tab="coins" onclick="setDetailTab(\'coins\')">Coins</button>'+
+        '<button type="button" data-tab="game" onclick="setDetailTab(\'game\')">Game earn</button>'+
+      '</div>'+
+      '<div id="ud-tx-box" class="ud-tx glass rounded-2xl p-3"></div>';
+    renderDetailTabContent("deposit");
+  });
+};
+
+/* Make user rows in overview/P&L and users list clickable */
+function enhanceUserRowsClickable(){
+  // users list
+  var box = document.getElementById("users-list") || document.getElementById("users-table") || document.getElementById("all-users-admin");
+  // overview profit loss containers
+  document.querySelectorAll("[data-user-phone], .user-row, .pl-user-row").forEach(function(el){
+    var ph = el.getAttribute("data-user-phone");
+    if(ph && !el.getAttribute("data-detail-bound")){
+      el.setAttribute("data-detail-bound","1");
+      el.style.cursor = "pointer";
+      el.addEventListener("click", function(){ openUserDetail(ph); });
+    }
+  });
+}
+
+// Hook renderUsers if exists
+(function(){
+  var _ru = window.renderUsers;
+  if(typeof _ru === "function"){
+    window.renderUsers = function(){
+      var r = _ru.apply(this, arguments);
+      setTimeout(function(){
+        // wrap list items
+        var list = document.getElementById("users-list");
+        if(list){
+          list.querySelectorAll("[data-phone], .user-item, button, .glass").forEach(function(el){
+            var ph = el.getAttribute("data-phone") || el.getAttribute("data-user-phone");
+            if(!ph){
+              var mono = el.querySelector(".font-mono, .text-cyan-400");
+              if(mono){
+                var t = (mono.textContent||"").trim();
+                if(/^[0-9+]{8,}$/.test(t)) ph = t;
+              }
+            }
+            if(ph && !el.getAttribute("data-open-bound")){
+              el.setAttribute("data-open-bound","1");
+              el.addEventListener("click", function(e){
+                if(e.target && (e.target.tagName==="BUTTON" || e.target.closest("button"))) return;
+                openUserDetail(ph);
+              });
+            }
+          });
+        }
+        enhanceUserRowsClickable();
+      }, 300);
+      return r;
+    };
+  }
+})();
+
+// Global helper for onclick in HTML
+window.viewUserFull = openUserDetail;
+
+/* P/L section: richer user lines */
+window.renderPLUsersDetailed = function(){
+  var host = document.getElementById("pl-users-list") || document.getElementById("overview-pl-list") || document.getElementById("section-overview");
+  if(!host) return;
+  var box = document.getElementById("pl-detail-users");
+  if(!box){
+    box = document.createElement("div");
+    box.id = "pl-detail-users";
+    box.className = "space-y-2 mt-3";
+    host.appendChild(box);
+  }
+  db.ref("users").once("value", function(snap){
+    if(!snap.exists()){ box.innerHTML = '<div class="text-slate-500 text-sm">No users</div>'; return; }
+    var rows = [];
+    snap.forEach(function(c){
+      var u = c.val()||{};
+      var profit = safeNum(u.totalProfit);
+      var loss = safeNum(u.totalLoss);
+      if(!loss && profit < 0) loss = Math.abs(profit);
+      rows.push({
+        phone: c.key,
+        username: u.username||c.key,
+        balance: safeNum(u.balance),
+        deposit: safeNum(u.totalDeposit),
+        withdraw: safeNum(u.totalWithdraw),
+        profit: profit,
+        loss: loss
+      });
+    });
+    rows.sort(function(a,b){ return b.profit - a.profit; });
+    box.innerHTML = '<h3 class="text-sm font-black text-slate-300 mb-2">Users · Profit / Loss (click for full detail)</h3>' +
+      rows.map(function(r){
+        return '<button type="button" onclick="openUserDetail(\''+r.phone.replace(/'/g,"")+'\')" class="w-full text-left glass rounded-xl p-3 border border-slate-700/50 hover:border-cyan-500/40">'+
+          '<div class="flex justify-between gap-2"><b>'+esc(r.username)+'</b><span class="text-[10px] font-mono text-cyan-400">'+esc(r.phone)+'</span></div>'+
+          '<div class="grid grid-cols-2 md:grid-cols-5 gap-2 mt-2 text-[10px]">'+
+          '<div>Bal <b class="text-white">'+fmtMoney(r.balance)+'</b></div>'+
+          '<div>Dep <b>'+fmtMoney(r.deposit)+'</b></div>'+
+          '<div>WD <b>'+fmtMoney(r.withdraw)+'</b></div>'+
+          '<div>Profit <b class="text-emerald-400">'+fmtMoney(r.profit)+'</b></div>'+
+          '<div>Loss <b class="text-rose-400">'+fmtMoney(r.loss)+'</b></div>'+
+          '</div></button>';
+      }).join("");
+  });
+};
+
+(function(){
+  var _ss = window.showSection;
+  if(typeof _ss === "function"){
+    window.showSection = function(id){
+      var det = document.getElementById("section-user-detail");
+      if(det && id !== "user-detail"){ det.classList.add("hidden"); det.classList.remove("active"); det.style.display="none"; }
+      _ss(id);
+      if(id === "overview" || id === "activeplans" || id === "users"){
+        setTimeout(renderPLUsersDetailed, 250);
+      }
+    };
+  }
+})();
+
+// Replace PDF buttons text hints via runtime
+document.addEventListener("click", function(e){
+  var t = e.target;
+  if(!t) return;
+  var tx = (t.textContent||"").toLowerCase();
+  var oc = (t.getAttribute && t.getAttribute("onclick")) || "";
+  if((tx.indexOf("pdf")!==-1 || oc.toLowerCase().indexOf("pdf")!==-1) && (tx.indexOf("user")!==-1 || oc.indexOf("User")!==-1 || oc.indexOf("user")!==-1)){
+    // if single user context
+    if(window._detailUserPhone){
+      e.preventDefault(); e.stopPropagation();
+      downloadUserCSV(window._detailUserPhone);
+    }
+  }
+}, true);
+
 </script>
 </body>
 </html>
