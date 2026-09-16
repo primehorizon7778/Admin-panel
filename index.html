@@ -79,7 +79,7 @@ input,select,textarea{"color-scheme":dark}
         <i class="fa-solid fa-shield-halved text-white text-3xl"></i>
       </div>
       <h1 class="text-3xl font-black tracking-tight">PRIME HORIZON</h1>
-      <p class="text-emerald-400 text-xs font-bold tracking-[3px] mt-1">ADMIN PANEL v6.1</p>
+      <p class="text-emerald-400 text-xs font-bold tracking-[3px] mt-1">ADMIN PANEL v6.2</p>
     </div>
     <div class="glass rounded-3xl p-8">
       <h2 class="text-xl font-extrabold text-center mb-6">Admin Login</h2>
@@ -3084,6 +3084,351 @@ document.addEventListener("click", function(e){
     }
   }
 }, true);
+
+
+/* ===== ADMIN V6.2 COINS SYSTEM ===== */
+window.DEFAULT_COINS_PER_RS = 100; // 100 coins = Rs 1
+
+function getCoinsPerRs(cb){
+  db.ref("admin_settings/coins_rate").once("value", function(snap){
+    var v = snap.val();
+    var n = (v && Number(v.coinsPerRs)) || window.DEFAULT_COINS_PER_RS;
+    if(!n || n < 1) n = 100;
+    cb(n);
+  }, function(){ cb(window.DEFAULT_COINS_PER_RS); });
+}
+
+function saveCoinsRateAdmin(){
+  var inp = document.getElementById("adm-coins-per-rs");
+  var n = Number(inp && inp.value);
+  if(!n || n < 1){ try{triggerToast("Invalid rate","error");}catch(e){} return; }
+  db.ref("admin_settings/coins_rate").set({
+    coinsPerRs: n,
+    note: n + " coins = Rs 1",
+    updatedAt: Date.now()
+  }).then(function(){
+    try{triggerToast("Coins rate saved: "+n+" coins = Rs 1");}catch(e){}
+  });
+}
+
+function ensureCoinsRateUI(){
+  // inject into settings section
+  var sec = document.getElementById("section-settings");
+  if(!sec || document.getElementById("adm-coins-rate-box")) return;
+  var box = document.createElement("div");
+  box.id = "adm-coins-rate-box";
+  box.className = "glass rounded-2xl p-4 space-y-3 mt-3";
+  box.innerHTML = '<h3 class="font-bold text-amber-300 text-sm">Coins → Rupees Rate</h3>'+
+    '<p class="text-[10px] text-slate-400">Jitne coins likho utne = <b>Rs 1</b>. Example: 100 → 100 coins = Rs 1</p>'+
+    '<div class="flex gap-2 items-center">'+
+    '<input id="adm-coins-per-rs" type="number" min="1" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="100">'+
+    '<button type="button" onclick="saveCoinsRateAdmin()" class="px-4 py-2 bg-amber-600 rounded-xl text-[10px] font-black">Save Rate</button></div>'+
+    '<p id="adm-coins-rate-hint" class="text-[10px] text-slate-500"></p>';
+  sec.appendChild(box);
+  getCoinsPerRs(function(n){
+    var inp = document.getElementById("adm-coins-per-rs");
+    if(inp) inp.value = n;
+    var h = document.getElementById("adm-coins-rate-hint");
+    if(h) h.textContent = "Current: "+n+" coins = Rs 1";
+  });
+}
+
+function collectCoinHistory(u, phone, cb){
+  var rows = [];
+  var logs = (u && u.logs) || {};
+  Object.keys(logs).forEach(function(k){
+    var r = logs[k]||{};
+    var ty = String(r.type||r.title||"").toLowerCase();
+    if(ty.indexOf("coin")!==-1 || ty.indexOf("game")!==-1 || ty.indexOf("convert")!==-1 || r.coins != null){
+      rows.push(Object.assign({id:k, source:"logs"}, r));
+    }
+  });
+  // dedicated coin ledger
+  db.ref("users/"+phone+"/coinHistory").once("value", function(snap){
+    if(snap.exists()) snap.forEach(function(c){
+      rows.push(Object.assign({id:c.key, source:"coinHistory"}, c.val()||{}));
+    });
+    db.ref("users/"+phone+"/coinsLedger").once("value", function(s2){
+      if(s2.exists()) s2.forEach(function(c){
+        rows.push(Object.assign({id:c.key, source:"coinsLedger"}, c.val()||{}));
+      });
+      rows.sort(function(a,b){ return (b.timestamp||b.ts||0)-(a.timestamp||a.ts||0); });
+      cb(rows);
+    }, function(){ rows.sort(function(a,b){ return (b.timestamp||b.ts||0)-(a.timestamp||a.ts||0); }); cb(rows); });
+  }, function(){ rows.sort(function(a,b){ return (b.timestamp||b.ts||0)-(a.timestamp||a.ts||0); }); cb(rows); });
+}
+
+window.adminAddUserCoins = function(){
+  var phone = window._detailUserPhone;
+  if(!phone) return;
+  var amt = Number(document.getElementById("ud-add-coins") && document.getElementById("ud-add-coins").value);
+  if(!amt || amt === 0){ try{triggerToast("Coins amount likhein","error");}catch(e){} return; }
+  db.ref("users/"+phone).once("value", function(snap){
+    var u = snap.val()||{};
+    var cur = Number(u.gamingBalance||u.gameBalance||u.coins||0);
+    var next = cur + amt;
+    var patch = { gamingBalance: next, coins: next, gameBalance: next };
+    var id = "COIN-ADD-"+Date.now();
+    var entry = {
+      id: id,
+      type: "coins_add",
+      title: "Coins added by Admin",
+      coins: amt,
+      direction: amt >= 0 ? "in" : "out",
+      where: "Admin panel",
+      balanceAfter: next,
+      timestamp: Date.now(),
+      by: "admin"
+    };
+    Promise.all([
+      db.ref("users/"+phone).update(patch),
+      db.ref("users/"+phone+"/coinHistory/"+id).set(entry),
+      db.ref("users/"+phone+"/logs/"+id).set(entry)
+    ]).then(function(){
+      try{triggerToast("Coins updated: "+next);}catch(e){}
+      renderUserDetailPage(phone);
+    });
+  });
+};
+
+window.adminAddUserBalance = function(){
+  var phone = window._detailUserPhone;
+  if(!phone) return;
+  var amt = Number(document.getElementById("ud-add-balance") && document.getElementById("ud-add-balance").value);
+  if(!amt || amt === 0){ try{triggerToast("Amount likhein","error");}catch(e){} return; }
+  db.ref("users/"+phone+"/balance").once("value", function(snap){
+    var cur = Number(snap.val()||0);
+    var next = cur + amt;
+    var id = "BAL-ADD-"+Date.now();
+    var entry = { id:id, type:"balance_adjust", title:"Balance adjusted by Admin", amount:amt, timestamp:Date.now(), by:"admin" };
+    Promise.all([
+      db.ref("users/"+phone+"/balance").set(next),
+      db.ref("users/"+phone+"/logs/"+id).set(entry)
+    ]).then(function(){
+      try{triggerToast("Balance: Rs "+next.toLocaleString());}catch(e){}
+      renderUserDetailPage(phone);
+    });
+  });
+};
+
+window.recoverCoinConversion = function(entryId, sourcePath){
+  var phone = window._detailUserPhone;
+  if(!phone || !entryId) return;
+  if(!confirm("Recover: rupees cut, coins back?")) return;
+  var refPath = "users/"+phone+"/"+(sourcePath||"coinHistory")+"/"+entryId;
+  db.ref(refPath).once("value", function(snap){
+    if(!snap.exists()){
+      // try logs
+      db.ref("users/"+phone+"/logs/"+entryId).once("value", function(s2){
+        if(!s2.exists()){ try{triggerToast("Entry not found","error");}catch(e){} return; }
+        doRecover(s2.val()||{}, "users/"+phone+"/logs/"+entryId);
+      });
+      return;
+    }
+    doRecover(snap.val()||{}, refPath);
+  });
+
+  function doRecover(entry, path){
+    if(entry.recovered){ try{triggerToast("Already recovered","error");}catch(e){} return; }
+    var coins = Number(entry.coins || entry.coinsAmount || 0);
+    var rs = Number(entry.rupees || entry.amount || entry.rs || 0);
+    getCoinsPerRs(function(rate){
+      if(!coins && rs) coins = Math.round(rs * rate);
+      if(!rs && coins) rs = coins / rate;
+      if(!coins || !rs){ try{triggerToast("Invalid convert entry","error");}catch(e){} return; }
+      db.ref("users/"+phone).once("value", function(us){
+        var u = us.val()||{};
+        var bal = Number(u.balance||0);
+        var coinBal = Number(u.gamingBalance||u.gameBalance||u.coins||0);
+        if(bal < rs){ try{triggerToast("Insufficient balance to recover","error");}catch(e){} return; }
+        var newBal = bal - rs;
+        var newCoins = coinBal + coins;
+        var rid = "COIN-REC-"+Date.now();
+        var recEntry = {
+          id: rid,
+          type: "coins_recover",
+          title: "Coins conversion recovered",
+          coins: coins,
+          rupees: rs,
+          rate: rate,
+          direction: "in",
+          where: "Admin recover",
+          timestamp: Date.now(),
+          recoveredFrom: entryId
+        };
+        Promise.all([
+          db.ref("users/"+phone).update({ balance: newBal, gamingBalance: newCoins, coins: newCoins, gameBalance: newCoins }),
+          db.ref(path).update({ recovered: true, recoveredAt: Date.now() }),
+          db.ref("users/"+phone+"/coinHistory/"+rid).set(recEntry),
+          db.ref("users/"+phone+"/logs/"+rid).set(recEntry)
+        ]).then(function(){
+          try{triggerToast("Recovered: +"+coins+" coins, -Rs "+rs);}catch(e){}
+          renderUserDetailPage(phone);
+        });
+      });
+    });
+  }
+};
+
+// Enhance detail page render — patch after original
+(function(){
+  var _render = window.renderUserDetailPage;
+  if(typeof _render !== "function") return;
+  window.renderUserDetailPage = function(phone){
+    _render(phone);
+    // after original paints, inject coins tools + replace coins tab behavior
+    setTimeout(function(){
+      var host = document.getElementById("user-detail-page");
+      if(!host || host.querySelector("#ud-coins-tools")) return;
+      getCoinsPerRs(function(rate){
+        var tools = document.createElement("div");
+        tools.id = "ud-coins-tools";
+        tools.className = "glass rounded-2xl p-4 space-y-3";
+        tools.innerHTML = '<div class="text-xs font-black text-amber-300">Balance & Coins adjust · Rate: <span id="ud-rate-label">'+rate+'</span> coins = Rs 1</div>'+
+          '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">'+
+          '<div class="flex gap-2"><input id="ud-add-balance" type="number" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Balance ± Rs"><button type="button" onclick="adminAddUserBalance()" class="px-3 py-2 bg-emerald-700 rounded-xl text-[10px] font-black">Add / Cut Rs</button></div>'+
+          '<div class="flex gap-2"><input id="ud-add-coins" type="number" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Coins ±"><button type="button" onclick="adminAddUserCoins()" class="px-3 py-2 bg-amber-600 rounded-xl text-[10px] font-black">Add / Cut Coins</button></div>'+
+          '</div>';
+        // insert after first glass card
+        var first = host.querySelector(".glass");
+        if(first && first.parentNode) first.parentNode.insertBefore(tools, first.nextSibling);
+        else host.appendChild(tools);
+      });
+    }, 400);
+  };
+})();
+
+(function(){
+  var _tab = window.setDetailTab;
+  var _renderTab = window.renderDetailTabContent;
+  window.setDetailTab = function(tab){
+    if(typeof _tab === "function") _tab(tab);
+    if(tab === "coins" || tab === "game") setTimeout(function(){ renderCoinsHistoryTab(); }, 50);
+  };
+  // also override renderDetailTabContent for coins
+  if(typeof _renderTab === "function"){
+    window.renderDetailTabContent = function(tab){
+      if(tab === "coins" || tab === "game"){
+        renderCoinsHistoryTab();
+        return;
+      }
+      _renderTab(tab);
+    };
+  }
+})();
+
+function renderCoinsHistoryTab(){
+  var box = document.getElementById("ud-tx-box");
+  var phone = window._detailUserPhone;
+  var u = window._detailUserData || {};
+  if(!box || !phone) return;
+  box.innerHTML = '<div class="text-slate-500 text-xs py-4">Loading coins history…</div>';
+  getCoinsPerRs(function(rate){
+    collectCoinHistory(u, phone, function(rows){
+      if(!rows.length){
+        box.innerHTML = '<div class="text-slate-500 text-sm py-6 text-center">No coins history</div>';
+        return;
+      }
+      box.innerHTML = '<p class="text-[10px] text-slate-400 mb-2">Rate now: <b class="text-amber-300">'+rate+' coins = Rs 1</b></p>' + rows.map(function(r){
+        var coins = Number(r.coins||r.coinsAmount||0);
+        var rs = Number(r.rupees||r.amount||r.rs||0);
+        var entryRate = Number(r.rate||0) || rate;
+        if(!rs && coins && (String(r.type||"").toLowerCase().indexOf("convert")!==-1)) rs = coins / entryRate;
+        if(!coins && rs && (String(r.type||"").toLowerCase().indexOf("convert")!==-1)) coins = Math.round(rs * entryRate);
+        var dir = r.direction || (coins < 0 || rs > 0 && String(r.type||"").indexOf("convert")!==-1 ? "out" : "in");
+        var where = r.where || r.channel || r.source || r.game || r.title || "—";
+        var when = (r.timestamp||r.ts) ? new Date(r.timestamp||r.ts).toLocaleString() : "—";
+        var isConvert = String(r.type||r.title||"").toLowerCase().indexOf("convert")!==-1 || (rs > 0 && coins > 0);
+        var recovered = !!r.recovered;
+        var recoverBtn = (isConvert && !recovered && coins > 0 && rs > 0) ?
+          ('<button type="button" onclick="recoverCoinConversion(\''+String(r.id).replace(/'/g,"")+'\',\''+(r.source==="logs"?"logs":"coinHistory")+'\')" class="mt-2 px-3 py-1.5 bg-rose-600 rounded-lg text-[10px] font-black">Recover</button>') :
+          (recovered ? '<span class="text-[10px] text-emerald-400 font-bold">Recovered</span>' : "");
+        return '<div class="glass rounded-xl p-3 mb-2 text-xs border border-amber-500/20">'+
+          '<div class="flex justify-between gap-2"><b class="text-white">'+esc(r.title||r.type||"Coins")+'</b>'+
+          '<span class="font-black '+(dir==="out"?"text-rose-300":"text-amber-300")+'">'+(coins?((dir==="out"?"-":"+")+Math.abs(coins)+" coins"):"")+'</span></div>'+
+          '<div class="text-slate-400 mt-1">Where / how: <span class="text-slate-200">'+esc(String(where))+'</span></div>'+
+          (rs?('<div class="text-slate-400">Converted: <b class="text-emerald-300">Rs '+Number(rs).toLocaleString()+'</b> · rate <b>'+entryRate+' coins/Rs</b></div>'):"")+
+          '<div class="text-slate-500 mt-1">'+when+'</div>'+recoverBtn+'</div>';
+      }).join("");
+    });
+  });
+}
+
+(function(){
+  var _ss = window.showSection;
+  if(typeof _ss === "function"){
+    window.showSection = function(id){
+      _ss(id);
+      if(id === "settings") setTimeout(ensureCoinsRateUI, 200);
+    };
+  }
+})();
+setTimeout(ensureCoinsRateUI, 1500);
+
+
+/* ===== ADMIN V6.2 ALIGNED FEATURES ===== */
+(function(){
+  var b = document.querySelector("h1, .top h1, title");
+})();
+
+function ensureAdminV62UI(){
+  var sec = document.getElementById("section-settings") || document.getElementById("section-users");
+  if(!sec || document.getElementById("adm-v62-special-msg")) return;
+  var box = document.createElement("div");
+  box.id = "adm-v62-special-msg";
+  box.className = "glass rounded-2xl p-4 space-y-3 mt-3";
+  box.innerHTML = '<h3 class="font-bold text-fuchsia-300 text-sm">Special Message to User</h3>'+
+    '<input id="sm-phone" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="User phone">'+
+    '<input id="sm-heading" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Heading">'+
+    '<select id="sm-style" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm"><option value="bold">Bold white</option><option value="bold green">Bold green</option><option value="bold black">Bold black</option><option value="bold underline">Bold underline</option><option value="bold green underline">Green underline</option></select>'+
+    '<textarea id="sm-body" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Message body"></textarea>'+
+    '<textarea id="sm-list" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="List items (one per line)"></textarea>'+
+    '<input id="sm-image" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Image URL optional">'+
+    '<button type="button" onclick="sendSpecialMessageAdmin()" class="w-full py-2.5 bg-fuchsia-600 rounded-xl text-xs font-black">Send Special Message</button>'+
+    '<h3 class="font-bold text-amber-300 text-sm pt-2">Password recovery events</h3>'+
+    '<div id="pwd-reset-events" class="text-xs space-y-2 max-h-48 overflow-y-auto"></div>';
+  sec.appendChild(box);
+  loadPwdResetEvents();
+}
+
+window.sendSpecialMessageAdmin = function(){
+  var phone = (document.getElementById("sm-phone").value||"").trim();
+  var heading = (document.getElementById("sm-heading").value||"").trim() || "Special Message";
+  var body = (document.getElementById("sm-body").value||"").trim();
+  var listText = (document.getElementById("sm-list").value||"").trim();
+  var imageUrl = (document.getElementById("sm-image").value||"").trim();
+  var headingStyle = document.getElementById("sm-style").value;
+  if(!phone){ try{triggerToast("Phone required","error");}catch(e){} return; }
+  var id = "SM-"+Date.now();
+  var payload = { id:id, heading:heading, headingStyle:headingStyle, body:body, listText:listText, imageUrl:imageUrl, ts:Date.now(), active:true };
+  db.ref("users/"+phone+"/specialMessages/"+id).set(payload).then(function(){
+    try{triggerToast("Special message sent");}catch(e){}
+  });
+};
+
+function loadPwdResetEvents(){
+  var box = document.getElementById("pwd-reset-events");
+  if(!box) return;
+  db.ref("admin_queues/password_resets").limitToLast(30).on("value", function(snap){
+    if(!snap.exists()){ box.innerHTML = '<div class="text-slate-500">No recovery events</div>'; return; }
+    var rows=[]; snap.forEach(function(c){ rows.push(Object.assign({id:c.key},c.val()||{})); });
+    rows.sort(function(a,b){ return (b.at||0)-(a.at||0); });
+    box.innerHTML = rows.map(function(r){
+      return '<div class="glass rounded-lg p-2 border border-amber-500/20"><b>'+esc(r.username||r.phone)+'</b> · <span class="font-mono text-cyan-400">'+esc(r.phone)+'</span><div class="text-slate-500">'+new Date(r.at||0).toLocaleString()+' · '+esc(r.status||"")+'</div></div>';
+    }).join("");
+  });
+}
+
+(function(){
+  var _ss = window.showSection;
+  if(typeof _ss==="function"){
+    window.showSection = function(id){
+      _ss(id);
+      if(id==="settings"||id==="users") setTimeout(ensureAdminV62UI, 200);
+    };
+  }
+})();
+setTimeout(ensureAdminV62UI, 1200);
 
 </script>
 </body>
