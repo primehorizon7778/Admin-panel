@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prime Horizon · Admin Panel v6.1</title>
-<script src="https://cdn.tailwindcss.com">
+<title>Prime Horizon · Admin v6.6</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
 /* ===== SERVER LOCK UI PROFESSIONAL ===== */
 function applyServerLock(offline){
   const banner = document.getElementById("server-offline-banner");
   if(banner) banner.classList.toggle("hidden", !offline);
   try{ setBadge("badge-server-bill", offline ? 1 : 0); }catch(e){}
-  // top alert bar
   let bar = document.getElementById("server-lock-topbar");
   if(!bar){
     bar = document.createElement("div");
     bar.id = "server-lock-topbar";
     bar.className = "hidden fixed top-0 left-0 right-0 z-[100] bg-gradient-to-r from-rose-600 to-orange-600 text-white text-center text-xs font-black py-2.5 tracking-wide shadow-lg";
-    bar.innerHTML = '⚠ SERVER BILL DUE — Actions locked · Open <b>Server Usages &amp; Bills</b> to pay';
+    bar.innerHTML = 'SERVER BILL DUE — Actions locked · Open <b>Server Usages &amp; Bills</b> to pay';
     document.body.appendChild(bar);
   }
   if(offline){
@@ -36,7 +36,6 @@ function applyServerLock(offline){
     });
   }
 }
-
 </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -79,7 +78,7 @@ input,select,textarea{"color-scheme":dark}
         <i class="fa-solid fa-shield-halved text-white text-3xl"></i>
       </div>
       <h1 class="text-3xl font-black tracking-tight">PRIME HORIZON</h1>
-      <p class="text-emerald-400 text-xs font-bold tracking-[3px] mt-1">ADMIN PANEL v6.2</p>
+      <p class="text-emerald-400 text-xs font-bold tracking-[3px] mt-1">ADMIN PANEL v6.6</p>
     </div>
     <div class="glass rounded-3xl p-8">
       <h2 class="text-xl font-extrabold text-center mb-6">Admin Login</h2>
@@ -112,7 +111,7 @@ input,select,textarea{"color-scheme":dark}
         <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-shield-halved text-white"></i></div>
         <div>
           <div class="font-black text-lg leading-none">PRIME HORIZON</div>
-          <div class="text-[10px] text-emerald-400 font-bold tracking-widest">ADMIN v6.1</div>
+          <div class="text-[10px] text-emerald-400 font-bold tracking-widest">ADMIN v6.6</div>
         </div>
       </div>
     </div>
@@ -1061,7 +1060,7 @@ function downloadUserPDF(phone){
 }
 
 
-/* ===== ADMIN v6.1 EXTENDED ===== */
+/* ===== ADMIN v6.6 EXTENDED ===== */
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dhib5t6me/image/upload";
 const CLOUDINARY_PRESET = "Naeeem";
 let lastAlert = null;
@@ -2747,7 +2746,7 @@ function buildUserFlat(phone, u){
   };
 }
 
-window.downloadUserJSON = function(phone){
+window.downloadUserJSON = function(){ try{triggerToast('JSON download removed','error');}catch(e){} return; }; window._downloadUserJSON_disabled = function(phone){
   phone = phone || window._detailUserPhone;
   if(!phone) return;
   db.ref("users/"+phone).once("value", function(snap){
@@ -2930,7 +2929,7 @@ window.renderUserDetailPage = function(phone){
           '</div>'+
           '<div class="flex flex-col gap-2">'+
             '<button type="button" onclick="downloadUserCSV(\''+phone.replace(/'/g,"")+'\')" class="px-3 py-2 bg-emerald-700 rounded-xl text-[10px] font-black">Download CSV</button>'+
-            '<button type="button" onclick="downloadUserJSON(\''+phone.replace(/'/g,"")+'\')" class="px-3 py-2 bg-indigo-700 rounded-xl text-[10px] font-black">Download JSON</button>'+
+            '<button type="button" onclick="downloadUserJSON(\''+phone.replace(/'/g,"")+'\')" class="px-3 py-2 bg-indigo-700 rounded-xl text-[10px] font-black"><!-- JSON removed --></button>'+
           '</div>'+
         '</div>'+
         '<div class="ud-grid">'+
@@ -3430,6 +3429,1503 @@ function loadPwdResetEvents(){
 })();
 setTimeout(ensureAdminV62UI, 1200);
 
+
+/* ===== ADMIN v6.6 AUDIT RISK FREEZE LEDGER EXPORT ===== */
+function writeAudit(action, detail){
+  var id = "AUD-"+Date.now()+"-"+Math.floor(Math.random()*999);
+  db.ref("admin_audit_log/"+id).set({
+    id:id, action:action, detail:detail||{}, at:Date.now(), by: localStorage.getItem("ph_admin_user")||"admin"
+  });
+}
+
+// wrap approve/reject if exist
+(function(){
+  ["approveKyc","rejectKyc","approveDeposit","rejectDeposit","approveWithdraw","rejectWithdraw"].forEach(function(fn){
+    if(typeof window[fn] === "function"){
+      var orig = window[fn];
+      window[fn] = function(){
+        writeAudit(fn, { args: Array.prototype.slice.call(arguments) });
+        return orig.apply(this, arguments);
+      };
+    }
+  });
+})();
+
+function ensureAdminV63Panels(){
+  var host = document.getElementById("section-settings") || document.getElementById("section-overview");
+  if(!host || document.getElementById("adm-v63-box")) return;
+  var box = document.createElement("div");
+  box.id = "adm-v63-box";
+  box.className = "glass rounded-2xl p-4 space-y-4 mt-3";
+  box.innerHTML =
+    '<h3 class="font-black text-cyan-300 text-sm">Module Freeze</h3>'+
+    '<div class="grid grid-cols-2 gap-2 text-[10px] font-bold" id="module-flag-btns">'+
+    ['withdraw','deposit','game','entertainment','plans'].map(function(m){
+      return '<button type="button" data-mod="'+m+'" onclick="toggleModuleFlag(\''+m+'\')" class="px-2 py-2 rounded-lg bg-slate-800">'+m+'</button>';
+    }).join("")+'</div>'+
+    '<h3 class="font-black text-amber-300 text-sm">Withdraw limits template</h3>'+
+    '<div class="flex gap-2"><input id="wd-limit-daily" type="number" placeholder="Daily WD limit Rs" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm">'+
+    '<button type="button" onclick="saveWdLimitTemplate()" class="px-3 py-2 bg-amber-600 rounded-xl text-[10px] font-black">Save</button></div>'+
+    '<h3 class="font-black text-emerald-300 text-sm">Terms version</h3>'+
+    '<div class="flex gap-2"><input id="terms-ver-inp" placeholder="e.g. 2" class="w-24 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm">'+
+    '<input id="terms-text-inp" placeholder="Terms text" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm">'+
+    '<button type="button" onclick="saveTermsVersion()" class="px-3 py-2 bg-emerald-700 rounded-xl text-[10px] font-black">Publish</button></div>'+
+    '<h3 class="font-black text-fuchsia-300 text-sm">Bulk message</h3>'+
+    '<select id="bulk-seg" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm"><option value="all">All users</option><option value="kyc_pending">KYC pending</option><option value="no_deposit">No deposit</option><option value="top_inviters">Top inviters (10+)</option></select>'+
+    '<input id="bulk-title" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Title">'+
+    '<textarea id="bulk-body" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Message"></textarea>'+
+    '<button type="button" onclick="sendBulkMessage()" class="w-full py-2 bg-fuchsia-600 rounded-xl text-xs font-black">Send bulk</button>'+
+    '<h3 class="font-black text-rose-300 text-sm">Risk flags</h3><div id="risk-flags-box" class="text-xs space-y-1 max-h-40 overflow-y-auto"></div>'+
+    '<h3 class="font-black text-slate-300 text-sm">Audit log</h3><div id="audit-log-box" class="text-xs space-y-1 max-h-40 overflow-y-auto"></div>'+
+    '<h3 class="font-black text-sky-300 text-sm">Coins economy</h3><div id="coins-economy-box" class="text-xs"></div>'+
+    '<button type="button" onclick="exportFullBackupJSON()" class="w-full py-2.5 bg-indigo-700 rounded-xl text-xs font-black">Full backup JSON export</button>'+
+    '<h3 class="font-black text-orange-300 text-sm">Deactivation requests</h3><div id="deact-req-box" class="text-xs space-y-1"></div>'+
+    '<h3 class="font-black text-lime-300 text-sm">Complaint SLA (>24h open)</h3><div id="complaint-sla-box" class="text-xs space-y-1"></div>';
+  host.appendChild(box);
+  refreshModuleFlagButtons();
+  loadRiskFlags();
+  loadAuditLog();
+  loadCoinsEconomy();
+  loadDeactRequests();
+  loadComplaintSLA();
+}
+
+window.toggleModuleFlag = function(mod){
+  db.ref("admin_settings/module_flags/"+mod).once("value", function(snap){
+    var cur = snap.val();
+    var next = cur === false ? true : false;
+    db.ref("admin_settings/module_flags/"+mod).set(next);
+    writeAudit("module_flag", { mod:mod, value:next });
+    try{triggerToast(mod+" = "+(next?"ON":"OFF"));}catch(e){}
+    refreshModuleFlagButtons();
+  });
+};
+function refreshModuleFlagButtons(){
+  db.ref("admin_settings/module_flags").once("value", function(snap){
+    var f = snap.val()||{};
+    document.querySelectorAll("#module-flag-btns button").forEach(function(b){
+      var m = b.getAttribute("data-mod");
+      var on = f[m] !== false;
+      b.textContent = m + (on?" ✓":" ✕");
+      b.style.background = on ? "#065f46" : "#7f1d1d";
+    });
+  });
+}
+window.saveWdLimitTemplate = function(){
+  var n = Number(document.getElementById("wd-limit-daily").value||0);
+  db.ref("admin_settings/withdraw_limits").set({ daily:n, updatedAt:Date.now() });
+  writeAudit("wd_limit", { daily:n });
+  try{triggerToast("Limit saved");}catch(e){}
+};
+window.saveTermsVersion = function(){
+  var ver = (document.getElementById("terms-ver-inp").value||"").trim()||"1";
+  var text = (document.getElementById("terms-text-inp").value||"").trim();
+  db.ref("admin_settings/terms_version").set({ version:ver, text:text, at:Date.now() });
+  writeAudit("terms_publish", { version:ver });
+  try{triggerToast("Terms published");}catch(e){}
+};
+window.sendBulkMessage = function(){
+  var seg = document.getElementById("bulk-seg").value;
+  var title = document.getElementById("bulk-title").value.trim()||"Notice";
+  var body = document.getElementById("bulk-body").value.trim();
+  if(!body){ try{triggerToast("Message required","error");}catch(e){} return; }
+  db.ref("users").once("value", function(snap){
+    var count=0;
+    snap.forEach(function(c){
+      var u=c.val()||{}; var ok=false;
+      if(seg==="all") ok=true;
+      else if(seg==="kyc_pending") ok = String(u.kycStatus||"").toLowerCase()==="pending";
+      else if(seg==="no_deposit") ok = !Number(u.totalDeposit);
+      else if(seg==="top_inviters") ok = Number(u.successfulInvites||u.referralCount||0)>=10;
+      if(!ok) return;
+      var id="BULK-"+Date.now()+"-"+c.key;
+      db.ref("users/"+c.key+"/notifications/"+id).set({ title:title, body:body, ts:Date.now(), type:"bulk" });
+      count++;
+    });
+    writeAudit("bulk_message", { seg:seg, count:count });
+    try{triggerToast("Sent to "+count+" users");}catch(e){}
+  });
+};
+function loadRiskFlags(){
+  var box=document.getElementById("risk-flags-box"); if(!box) return;
+  db.ref("users").once("value", function(snap){
+    var flags=[];
+    snap.forEach(function(c){
+      var u=c.val()||{}; var phone=c.key;
+      var dep=Number(u.totalDeposit||0), wd=Number(u.totalWithdraw||0);
+      var age = u.createdAt ? (Date.now()-Number(u.createdAt)) : 9999999999;
+      if(wd > dep + 1000) flags.push({phone:phone, reason:"Withdraw > deposit"});
+      if(age < 2*24*3600*1000 && wd > 0) flags.push({phone:phone, reason:"New account + withdraw"});
+      if(Number(u.successfulInvites||0)===0 && wd > 5000) flags.push({phone:phone, reason:"High WD no invites"});
+    });
+    box.innerHTML = flags.slice(0,40).map(function(f){
+      return '<button type="button" onclick="openUserDetail && openUserDetail(\''+f.phone+'\')" class="block w-full text-left glass rounded-lg p-2 mb-1"><span class="text-cyan-400 font-mono">'+f.phone+'</span> · '+f.reason+'</button>';
+    }).join("") || '<div class="text-slate-500">No flags</div>';
+  });
+  // also security alerts queue
+  db.ref("admin_queues/security_alerts").limitToLast(20).once("value", function(snap){
+    if(!snap.exists()) return;
+    var extra="";
+    snap.forEach(function(c){ var v=c.val()||{}; extra += '<div class="text-amber-300">'+ (v.type||"alert") +" · "+(v.phone||"")+"</div>"; });
+    box.innerHTML = extra + box.innerHTML;
+  });
+}
+function loadAuditLog(){
+  var box=document.getElementById("audit-log-box"); if(!box) return;
+  db.ref("admin_audit_log").limitToLast(40).on("value", function(snap){
+    if(!snap.exists()){ box.innerHTML='<div class="text-slate-500">Empty</div>'; return; }
+    var rows=[]; snap.forEach(function(c){ rows.push(c.val()||{}); });
+    rows.sort(function(a,b){ return (b.at||0)-(a.at||0); });
+    box.innerHTML = rows.map(function(r){
+      return '<div class="glass rounded p-1.5 mb-1"><b>'+esc(r.action||"")+'</b> · '+esc(r.by||"")+' · '+new Date(r.at||0).toLocaleString()+'</div>';
+    }).join("");
+  });
+}
+function loadCoinsEconomy(){
+  var box=document.getElementById("coins-economy-box"); if(!box) return;
+  db.ref("users").once("value", function(snap){
+    var totalCoins=0, users=0;
+    snap.forEach(function(c){ var u=c.val()||{}; totalCoins += Number(u.gamingBalance||u.coins||0); users++; });
+    db.ref("admin_settings/coins_rate").once("value", function(rs){
+      var rate = (rs.val()&&Number(rs.val().coinsPerRs))||100;
+      box.innerHTML = '<div>Users: <b>'+users+'</b></div><div>Total coins in system: <b class="text-amber-300">'+totalCoins.toLocaleString()+'</b></div>'+
+        '<div>Rate: <b>'+rate+' coins = Rs 1</b></div><div>Notional Rs: <b class="text-emerald-400">'+Math.round(totalCoins/rate).toLocaleString()+'</b></div>';
+    });
+  });
+}
+window.exportFullBackupJSON = function(){
+  db.ref("/").once("value", function(snap){
+    // too big maybe - export users + queues only
+    db.ref("users").once("value", function(u){
+      db.ref("admin_queues").once("value", function(q){
+        var data = { exportedAt: Date.now(), users:u.val(), admin_queues:q.val() };
+        var blob = new Blob([JSON.stringify(data)], {type:"application/json"});
+        var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="PH_backup_"+Date.now()+".json"; a.click();
+        writeAudit("full_backup_export", {});
+        try{triggerToast("Backup downloaded");}catch(e){}
+      });
+    });
+  });
+};
+function loadDeactRequests(){
+  var box=document.getElementById("deact-req-box"); if(!box) return;
+  db.ref("admin_queues/deactivation_requests").limitToLast(30).on("value", function(snap){
+    if(!snap.exists()){ box.innerHTML='<div class="text-slate-500">None</div>'; return; }
+    var rows=[]; snap.forEach(function(c){ rows.push(Object.assign({id:c.key},c.val()||{})); });
+    rows.sort(function(a,b){return (b.at||0)-(a.at||0);});
+    box.innerHTML = rows.map(function(r){
+      return '<div class="glass rounded p-2 mb-1 flex justify-between gap-2"><div><b>'+esc(r.username||"")+'</b> '+esc(r.phone)+'<div class="text-slate-500">'+new Date(r.at||0).toLocaleString()+'</div></div>'+
+        '<span class="text-[10px] font-bold">'+esc(r.status||"pending")+'</span></div>';
+    }).join("");
+  });
+}
+function loadComplaintSLA(){
+  var box=document.getElementById("complaint-sla-box"); if(!box) return;
+  db.ref("admin_queues/complaints").once("value", function(snap){
+    if(!snap.exists()){ box.innerHTML='<div class="text-slate-500">None</div>'; return; }
+    var late=[];
+    snap.forEach(function(c){
+      var v=c.val()||{}; var st=String(v.status||"pending").toLowerCase();
+      if(st!=="pending"&&st!=="open") return;
+      var ts=Number(v.timestamp||v.ts||v.createdAt||0);
+      if(ts && (Date.now()-ts) > 24*3600*1000) late.push(Object.assign({id:c.key},v));
+    });
+    box.innerHTML = late.map(function(r){
+      return '<div class="text-rose-300 font-mono text-[10px]">'+esc(r.phone||r.userPhone||r.id)+' · open >24h</div>';
+    }).join("") || '<div class="text-emerald-400">All OK</div>';
+  });
+}
+
+(function(){
+  var _ss = window.showSection;
+  if(typeof _ss==="function"){
+    window.showSection = function(id){
+      _ss(id);
+      if(id==="settings"||id==="overview") setTimeout(ensureAdminV63Panels, 200);
+    };
+  }
+})();
+setTimeout(ensureAdminV63Panels, 1500);
+
+// risk on load
+setTimeout(loadRiskFlags, 2000);
+
+
+/* ===== ADMIN MAINTENANCE MODE CONTROLS ===== */
+function ensureMaintAdminUI(){
+  if(document.getElementById('maint-mode-admin')) return;
+  var host = document.getElementById('adm-v63-box') || document.getElementById('section-settings') || document.body;
+  var box = document.createElement('div');
+  box.id = 'maint-mode-admin';
+  box.className = 'glass rounded-2xl p-4 space-y-3 mt-3';
+  box.innerHTML = '<h3 class="font-black text-rose-300 text-sm">Maintenance Mode</h3>'+
+    '<select id="mm-mode" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm">'+
+    '<option value="off">OFF — App normal</option>'+
+    '<option value="full">FULL — Animated lock screen</option>'+
+    '<option value="soft">SOFT — Banner only · only Plan Profit</option></select>'+
+    '<textarea id="mm-msg" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Message for users"></textarea>'+
+    '<button type="button" onclick="saveMaintModeAdmin()" class="w-full py-2.5 bg-rose-600 rounded-xl text-xs font-black">Apply Maintenance</button>';
+  host.appendChild(box);
+}
+window.saveMaintModeAdmin = function(){
+  var mode = document.getElementById('mm-mode').value;
+  var msg = (document.getElementById('mm-msg').value||'').trim();
+  var payload = {
+    mode: mode,
+    status: mode==='off' ? 'on' : 'off',
+    maintenance: mode!=='off',
+    enabled: mode!=='off',
+    soft: mode==='soft',
+    animation: mode==='full',
+    message: msg || (mode==='soft' ? 'App Under Maintenance — only Plan Profit Collect available' : 'App Under Maintenance'),
+    note: msg,
+    updatedAt: Date.now()
+  };
+  Promise.all([
+    db.ref('server_control').update(payload),
+    db.ref('admin_settings/maintenance').set(payload)
+  ]).then(function(){ try{triggerToast('Maintenance: '+mode);}catch(e){} });
+};
+setTimeout(ensureMaintAdminUI, 1200);
+
+
+/* ===== PRIME HORIZON ADMIN: GAME HIDE / FREEZE ===== */
+function ensurePHGameControlAdmin(){
+  if(document.getElementById('ph-game-control-admin')) return;
+  var host = document.getElementById('maint-mode-admin') || document.getElementById('adm-v63-box') || document.getElementById('section-settings') || document.body;
+  var games = [
+    {id:'aviator', name:'Sky Rise / Aviator'},
+    {id:'mines', name:'Diamond Mines'},
+    {id:'plinko', name:'Plinko'},
+    {id:'spin', name:'Fortune Wheel'},
+    {id:'terminal', name:'Trade Desk'},
+    {id:'cards', name:'Cards'},
+    {id:'carrom', name:'Carrom'},
+    {id:'wheel', name:'Wheel'}
+  ];
+  var box = document.createElement('div');
+  box.id = 'ph-game-control-admin';
+  box.className = 'glass rounded-2xl p-4 space-y-3 mt-3';
+  box.innerHTML = '<h3 class="font-black text-pink-300 text-sm"><i class="fa-solid fa-gamepad mr-1"></i> Games Hide / Freeze</h3>'+
+    '<p class="text-[10px] text-slate-400">Prime Horizon se control — Hide = list se hatao · Freeze = play band</p>'+
+    '<div id="ph-gc-list" class="space-y-2"></div>';
+  host.appendChild(box);
+  var list = document.getElementById('ph-gc-list');
+  list.innerHTML = games.map(function(g){
+    return '<div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-900/70 border border-slate-700/50">'+
+      '<div class="text-xs font-bold text-white">'+g.name+'</div>'+
+      '<div class="flex gap-1.5">'+
+      '<button type="button" id="ph-gf-'+g.id+'" onclick="phToggleGameFlag(\''+g.id+'\',\'freeze\')" class="px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-slate-700">Freeze</button>'+
+      '<button type="button" id="ph-gh-'+g.id+'" onclick="phToggleGameFlag(\''+g.id+'\',\'hide\')" class="px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-slate-700">Hide</button>'+
+      '</div></div>';
+  }).join('');
+  db.ref('gamesHub/gameFlags').on('value', function(snap){
+    var f = snap.val()||{};
+    games.forEach(function(g){
+      var x = f[g.id]||{};
+      var bf = document.getElementById('ph-gf-'+g.id);
+      var bh = document.getElementById('ph-gh-'+g.id);
+      if(bf){ bf.className = 'px-2.5 py-1.5 rounded-lg text-[10px] font-black '+(x.freeze?'bg-rose-600 text-white':'bg-slate-700 text-slate-200'); bf.textContent = x.freeze?'FROZEN':'Freeze'; }
+      if(bh){ bh.className = 'px-2.5 py-1.5 rounded-lg text-[10px] font-black '+(x.hide?'bg-violet-600 text-white':'bg-slate-700 text-slate-200'); bh.textContent = x.hide?'HIDDEN':'Hide'; }
+    });
+  });
+}
+window.phToggleGameFlag = function(id, key){
+  db.ref('gamesHub/gameFlags/'+id+'/'+key).once('value', function(snap){
+    var next = !snap.val();
+    db.ref('gamesHub/gameFlags/'+id+'/'+key).set(next).then(function(){
+      try{ triggerToast(id+' · '+key+' = '+next); }catch(e){}
+    });
+  });
+};
+setTimeout(ensurePHGameControlAdmin, 1000);
+(function(){
+  var _ss = window.showSection;
+  if(typeof _ss==='function'){
+    window.showSection = function(id){
+      _ss(id);
+      if(id==='settings'||id==='overview') setTimeout(ensurePHGameControlAdmin, 150);
+    };
+  }
+})();
+
+
+/* ===== PH APP MODULES HIDE / FREEZE ===== */
+window.PH_APP_MODULES = [
+  {id:'withdraw', name:'Withdraw'},
+  {id:'deposit', name:'Deposit'},
+  {id:'plans', name:'Invest Plans'},
+  {id:'invite', name:'Invite Friends'},
+  {id:'entertainment', name:'Entertainment'},
+  {id:'history', name:'History'},
+  {id:'complaint', name:'Complaint'},
+  {id:'play_games', name:'Play Games'},
+  {id:'daily_reward', name:'Daily Reward'},
+  {id:'lucky_draw', name:'Lucky Draw'},
+  {id:'kyc', name:'KYC'},
+  {id:'profile', name:'My Profile'}
+];
+
+function ensurePHModuleControl(){
+  if(document.getElementById('ph-module-control')) return;
+  var host = document.getElementById('ph-game-control-admin') || document.getElementById('maint-mode-admin') || document.getElementById('section-settings') || document.body;
+  var box = document.createElement('div');
+  box.id = 'ph-module-control';
+  box.className = 'glass rounded-2xl p-4 space-y-3 mt-3';
+  box.innerHTML = '<h3 class="font-black text-cyan-300 text-sm">Prime Horizon App · Hide / Freeze</h3>'+
+    '<p class="text-[10px] text-slate-400">App ke buttons/options control — Hide = nazar na aaye · Freeze = dikhe lekin kaam na kare</p>'+
+    '<div id="ph-mod-list" class="space-y-2 max-h-80 overflow-y-auto"></div>';
+  host.appendChild(box);
+  var list = document.getElementById('ph-mod-list');
+  list.innerHTML = PH_APP_MODULES.map(function(m){
+    return '<div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-900/70 border border-slate-700/40">'+
+      '<div class="text-xs font-bold text-white">'+m.name+'</div>'+
+      '<div class="flex gap-1.5">'+
+      '<button type="button" id="ph-mf-'+m.id+'" onclick="phToggleModule(\''+m.id+'\',\'freeze\')" class="px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-slate-700">Freeze</button>'+
+      '<button type="button" id="ph-mh-'+m.id+'" onclick="phToggleModule(\''+m.id+'\',\'hide\')" class="px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-slate-700">Hide</button>'+
+      '</div></div>';
+  }).join('');
+  db.ref('admin_settings/app_modules').on('value', function(snap){
+    var f = snap.val()||{};
+    PH_APP_MODULES.forEach(function(m){
+      var x = f[m.id]||{};
+      var bf = document.getElementById('ph-mf-'+m.id);
+      var bh = document.getElementById('ph-mh-'+m.id);
+      if(bf){ bf.className = 'px-2.5 py-1.5 rounded-lg text-[10px] font-black '+(x.freeze?'bg-rose-600 text-white':'bg-slate-700'); bf.textContent = x.freeze?'FROZEN':'Freeze'; }
+      if(bh){ bh.className = 'px-2.5 py-1.5 rounded-lg text-[10px] font-black '+(x.hide?'bg-violet-600 text-white':'bg-slate-700'); bh.textContent = x.hide?'HIDDEN':'Hide'; }
+    });
+  });
+}
+window.phToggleModule = function(id, key){
+  db.ref('admin_settings/app_modules/'+id+'/'+key).once('value', function(snap){
+    db.ref('admin_settings/app_modules/'+id+'/'+key).set(!snap.val()).then(function(){
+      try{ triggerToast(id+' '+key+' updated'); }catch(e){}
+    });
+  });
+};
+setTimeout(ensurePHModuleControl, 1100);
+
+
+/* ===== ADMIN MODULE TOGGLES Unhide/Unfreeze + NO maintenance ===== */
+(function(){
+  // remove maint admin box if present
+  var kill = function(){
+    var m = document.getElementById('maint-mode-admin');
+    if(m) m.remove();
+  };
+  setInterval(kill, 1000);
+  // override saveMaintModeAdmin to no-op
+  window.saveMaintModeAdmin = function(){
+    try{ triggerToast('Maintenance sirf Developer panel se','error'); }catch(e){}
+  };
+})();
+
+// Improve module button labels live
+(function(){
+  if(!window.db) return;
+  db.ref('admin_settings/app_modules').on('value', function(snap){
+    var f = snap.val()||{};
+    (window.PH_APP_MODULES||[]).forEach(function(m){
+      var x = f[m.id]||{};
+      var bf = document.getElementById('ph-mf-'+m.id);
+      var bh = document.getElementById('ph-mh-'+m.id);
+      if(bf){
+        bf.textContent = x.freeze ? 'Unfreeze' : 'Freeze';
+        bf.className = 'px-2.5 py-1.5 rounded-lg text-[10px] font-black '+(x.freeze?'bg-emerald-600 text-white':'bg-rose-700 text-white');
+      }
+      if(bh){
+        bh.textContent = x.hide ? 'Unhide' : 'Hide';
+        bh.className = 'px-2.5 py-1.5 rounded-lg text-[10px] font-black '+(x.hide?'bg-emerald-600 text-white':'bg-violet-700 text-white');
+      }
+    });
+  });
+})();
+
+
+/* ===== FINAL ADMIN MODULE TOGGLE WRITE ===== */
+window.phToggleModule = function(id, key){
+  if(!window.db){ alert('DB missing'); return; }
+  var ref = db.ref('admin_settings/app_modules/'+id);
+  ref.once('value').then(function(snap){
+    var cur = snap.val()||{};
+    cur[key] = !cur[key];
+    // mutual exclusivity optional: hide wins
+    return ref.set(cur);
+  }).then(function(){
+    try{ triggerToast(id+' updated'); }catch(e){}
+  }).catch(function(e){ alert('Save failed: '+e.message); });
+};
+window.PH_APP_MODULES = window.PH_APP_MODULES || [
+  {id:'withdraw',name:'Withdraw'},{id:'deposit',name:'Deposit'},{id:'plans',name:'Invest Plans'},
+  {id:'invite',name:'Invite Friends'},{id:'entertainment',name:'Entertainment'},{id:'history',name:'History'},
+  {id:'complaint',name:'Complaint'},{id:'play_games',name:'Play Games'},{id:'daily_reward',name:'Daily Reward'},
+  {id:'lucky_draw',name:'Lucky Draw'},{id:'kyc',name:'KYC'},{id:'profile',name:'My Profile'}
+];
+function ensurePHModuleControlFinal(){
+  var host = document.getElementById('section-settings') || document.getElementById('section-overview') || document.body;
+  var box = document.getElementById('ph-module-control');
+  if(!box){
+    box = document.createElement('div');
+    box.id = 'ph-module-control';
+    box.className = 'glass rounded-2xl p-4 space-y-3 mt-3';
+    box.innerHTML = '<h3 class="font-black text-cyan-300 text-sm">Prime Horizon App · Hide / Freeze</h3><div id="ph-mod-list" class="space-y-2 max-h-96 overflow-y-auto"></div>';
+    host.appendChild(box);
+  }
+  var list = document.getElementById('ph-mod-list');
+  list.innerHTML = PH_APP_MODULES.map(function(m){
+    return '<div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-900/70 border border-slate-700/40">'+
+      '<div class="text-xs font-bold text-white">'+m.name+'</div>'+
+      '<div class="flex gap-1.5">'+
+      '<button type="button" id="ph-mf-'+m.id+'" onclick="phToggleModule(\''+m.id+'\',\'freeze\')" class="px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-rose-700 text-white">Freeze</button>'+
+      '<button type="button" id="ph-mh-'+m.id+'" onclick="phToggleModule(\''+m.id+'\',\'hide\')" class="px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-violet-700 text-white">Hide</button>'+
+      '</div></div>';
+  }).join('');
+  db.ref('admin_settings/app_modules').on('value', function(snap){
+    var f = snap.val()||{};
+    PH_APP_MODULES.forEach(function(m){
+      var x = f[m.id]||{};
+      var bf=document.getElementById('ph-mf-'+m.id), bh=document.getElementById('ph-mh-'+m.id);
+      if(bf){ bf.textContent=x.freeze?'Unfreeze':'Freeze'; bf.style.background=x.freeze?'#059669':'#be123c'; }
+      if(bh){ bh.textContent=x.hide?'Unhide':'Hide'; bh.style.background=x.hide?'#059669':'#6d28d9'; }
+    });
+  });
+}
+// remove admin maintenance box
+setInterval(function(){ var m=document.getElementById('maint-mode-admin'); if(m) m.remove(); }, 800);
+setTimeout(ensurePHModuleControlFinal, 600);
+setTimeout(ensurePHModuleControlFinal, 2000);
+
+
+/* ===== REMOVE MODULE FREEZE UI FROM ADMIN ===== */
+(function(){
+  function kill(){
+    ['ph-module-control','ph-game-control-admin','maint-mode-admin','adm-v63-box'].forEach(function(id){
+      // only remove module/maint specific, keep v63 if has other tools — remove module boxes
+    });
+    var a = document.getElementById('ph-module-control'); if(a) a.remove();
+    var b = document.getElementById('maint-mode-admin'); if(b) b.remove();
+  }
+  setInterval(kill, 1000);
+  window.phToggleModule = function(){ try{triggerToast('Freeze/Hide system removed','error');}catch(e){} };
+  window.saveMaintModeAdmin = function(){ try{triggerToast('Use Developer FULL maintenance only','error');}catch(e){} };
+})();
+
+
+/* ===== ADMIN DIRECT WARNING / ALERT PER USER ===== */
+window.sendUserWarningAlert = function(phone, type){
+  phone = String(phone||'').trim();
+  if(!phone){ try{triggerToast('User missing','error');}catch(e){} return; }
+  type = (type === 'alert') ? 'alert' : 'warning';
+  var note = prompt(type === 'alert' ? 'Alert message for user:' : 'Warning message for user:', '');
+  if(note === null) return;
+  note = String(note||'').trim();
+  if(!note){ try{triggerToast('Message required','error');}catch(e){} return; }
+  var payload = {
+    active: true,
+    type: type,
+    note: note,
+    byName: 'Admin',
+    by: localStorage.getItem('ph_admin_user') || 'admin',
+    at: Date.now(),
+    disabled: false,
+    dismissedUntil: 0
+  };
+  db.ref('users/'+phone+'/activeWarning').set(payload).then(function(){
+    // also notification
+    var id = 'WARN-'+Date.now();
+    return db.ref('users/'+phone+'/notifications/'+id).set({
+      id: id,
+      title: type === 'alert' ? 'Alert' : 'Warning',
+      body: note,
+      type: type,
+      ts: Date.now()
+    });
+  }).then(function(){
+    try{ triggerToast((type==='alert'?'Alert':'Warning')+' sent'); }catch(e){}
+    try{ if(typeof writeAudit==='function') writeAudit('user_'+type, {phone:phone}); }catch(e){}
+  }).catch(function(e){
+    try{ triggerToast('Failed: '+e.message,'error'); }catch(err){ alert('Failed'); }
+  });
+};
+
+window.clearUserWarning = function(phone){
+  phone = String(phone||'').trim();
+  if(!phone) return;
+  if(!confirm('Clear warning/alert for this user?')) return;
+  db.ref('users/'+phone+'/activeWarning').set({
+    active: false,
+    disabled: true,
+    clearedAt: Date.now(),
+    by: 'admin'
+  }).then(function(){ try{triggerToast('Cleared');}catch(e){} });
+};
+
+function injectWarnButtonsIntoUserRows(){
+  // user detail page
+  var host = document.getElementById('user-detail-page');
+  if(host && window._detailUserPhone && !document.getElementById('ud-warn-actions')){
+    var phone = window._detailUserPhone;
+    var bar = document.createElement('div');
+    bar.id = 'ud-warn-actions';
+    bar.className = 'flex flex-wrap gap-2 mt-3';
+    bar.innerHTML =
+      '<button type="button" onclick="sendUserWarningAlert(\''+phone.replace(/'/g,"")+'\',\'warning\')" class="px-3 py-2 rounded-xl text-[10px] font-black bg-amber-600 text-white">⚠ Warning</button>'+
+      '<button type="button" onclick="sendUserWarningAlert(\''+phone.replace(/'/g,"")+'\',\'alert\')" class="px-3 py-2 rounded-xl text-[10px] font-black bg-rose-600 text-white">🚨 Alert</button>'+
+      '<button type="button" onclick="clearUserWarning(\''+phone.replace(/'/g,"")+'\')" class="px-3 py-2 rounded-xl text-[10px] font-black bg-slate-600 text-white">Clear</button>';
+    host.insertBefore(bar, host.firstChild);
+  }
+
+  // users list rows — add small buttons near phone
+  document.querySelectorAll('#users-list [data-phone], #users-list .font-mono, #pl-detail-users button').forEach(function(el){
+    if(el.getAttribute('data-warn-bound')) return;
+    var phone = el.getAttribute('data-phone') || el.getAttribute('data-user-phone');
+    if(!phone){
+      var t = (el.textContent||'').trim();
+      if(/^[0-9+]{10,}$/.test(t)) phone = t;
+    }
+    // parent row
+    var row = el.closest('button, .glass, .user-row, div') || el;
+    if(!phone || row.getAttribute('data-warn-bound')) return;
+    row.setAttribute('data-warn-bound','1');
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:4px;margin-top:6px;flex-wrap:wrap';
+    wrap.innerHTML =
+      '<button type="button" onclick="event.stopPropagation();sendUserWarningAlert(\''+String(phone).replace(/'/g,"")+'\',\'warning\')" style="padding:4px 8px;border:none;border-radius:8px;background:#d97706;color:#fff;font-size:9px;font-weight:900">Warning</button>'+
+      '<button type="button" onclick="event.stopPropagation();sendUserWarningAlert(\''+String(phone).replace(/'/g,"")+'\',\'alert\')" style="padding:4px 8px;border:none;border-radius:8px;background:#e11d48;color:#fff;font-size:9px;font-weight:900">Alert</button>';
+    row.appendChild(wrap);
+  });
+}
+
+// Hook openUserDetail / renderUsers
+(function(){
+  var _open = window.openUserDetail;
+  if(typeof _open === 'function'){
+    window.openUserDetail = function(phone){
+      var r = _open.apply(this, arguments);
+      setTimeout(injectWarnButtonsIntoUserRows, 400);
+      setTimeout(injectWarnButtonsIntoUserRows, 900);
+      return r;
+    };
+  }
+  var _ru = window.renderUsers;
+  if(typeof _ru === 'function'){
+    window.renderUsers = function(){
+      var r = _ru.apply(this, arguments);
+      setTimeout(injectWarnButtonsIntoUserRows, 300);
+      return r;
+    };
+  }
+})();
+
+setInterval(injectWarnButtonsIntoUserRows, 2500);
+console.log('%c[Admin] Direct Warning/Alert ready','color:#fbbf24');
+
+
+/* ===== FIX KYC APPROVE → user verified ===== */
+window.approveKycRequest = async function(id, phone){
+  phone = phone || '';
+  try{
+    // find phone from request if missing
+    if(!phone && id){
+      var s = await db.ref('admin_queues/kyc_requests/'+id).once('value');
+      if(!s.exists()) s = await db.ref('kyc_requests/'+id).once('value');
+      var r = s.val()||{};
+      phone = r.phone || r.userPhone || r.user || '';
+    }
+    if(!phone){ try{triggerToast('Phone missing','error');}catch(e){} return; }
+    await db.ref('users/'+phone).update({
+      kycStatus: 'verified',
+      verificationStatus: 'verified',
+      isVerified: true,
+      kycApprovedAt: Date.now(),
+      kycApprovedBy: 'admin'
+    });
+    if(id){
+      await db.ref('admin_queues/kyc_requests/'+id).update({ status:'approved', approvedAt:Date.now() });
+      try{ await db.ref('kyc_requests/'+id).update({ status:'approved', approvedAt:Date.now() }); }catch(e){}
+    }
+    try{ triggerToast('KYC approved — user Verified'); }catch(e){}
+    try{ if(typeof loadKyc==='function') loadKyc(); }catch(e){}
+    try{ if(typeof loadKYC==='function') loadKYC(); }catch(e){}
+    try{ if(typeof renderKyc==='function') renderKyc(); }catch(e){}
+  }catch(e){
+    try{ triggerToast('Approve failed','error'); }catch(err){}
+  }
+};
+
+window.rejectKycRequest = async function(id, phone){
+  try{
+    if(!phone && id){
+      var s = await db.ref('admin_queues/kyc_requests/'+id).once('value');
+      if(!s.exists()) s = await db.ref('kyc_requests/'+id).once('value');
+      var r = s.val()||{};
+      phone = r.phone || r.userPhone || '';
+    }
+    if(phone){
+      await db.ref('users/'+phone).update({ kycStatus:'rejected', verificationStatus:'rejected', kycRejectedAt:Date.now() });
+    }
+    if(id){
+      await db.ref('admin_queues/kyc_requests/'+id).update({ status:'rejected', rejectedAt:Date.now() });
+      try{ await db.ref('kyc_requests/'+id).update({ status:'rejected' }); }catch(e){}
+    }
+    try{ triggerToast('KYC rejected'); }catch(e){}
+  }catch(e){}
+};
+
+// Hook common approve button names
+(function(){
+  ['approveKyc','approveKYC','kycApprove'].forEach(function(fn){
+    if(typeof window[fn]==='function' && !window[fn].__fixed){
+      var o = window[fn];
+      window[fn] = function(id, phone){
+        return approveKycRequest(id, phone);
+      };
+      window[fn].__fixed = true;
+    } else if(typeof window[fn] !== 'function'){
+      window[fn] = function(id, phone){ return approveKycRequest(id, phone); };
+    }
+  });
+})();
+
+// Event delegation for Approve buttons in KYC list
+document.addEventListener('click', function(e){
+  var t = e.target;
+  if(!t) return;
+  var tx = (t.textContent||'').trim().toLowerCase();
+  if(tx !== 'approve' && tx !== 'accept' && !t.closest('[data-kyc-approve]')) return;
+  var row = t.closest('[data-phone], [data-id], .kyc-item, .glass, tr, div');
+  if(!row) return;
+  // only if in kyc section-ish
+  var section = document.getElementById('section-kyc') || document.getElementById('kyc-list');
+  if(section && !section.contains(t) && !(t.closest('#kyc-list')||t.closest('#section-kyc'))) return;
+  var phone = row.getAttribute('data-phone') || '';
+  var id = row.getAttribute('data-id') || '';
+  if(!phone){
+    var mono = row.querySelector('.font-mono');
+    if(mono) phone = (mono.textContent||'').trim();
+  }
+  if(phone || id){
+    e.preventDefault();
+    e.stopPropagation();
+    approveKycRequest(id, phone);
+  }
+}, true);
+
+console.log('%c[Admin] KYC approve → verified fix','color:#34d399');
+
+
+/* ===== DISABLE NEW KYC ACCEPT HOOKS — keep old admin ===== */
+(function(){
+  // stop capturing Approve clicks for new KYC handler
+  window.approveKycRequest = function(){ /* disabled — use old admin KYC */ };
+  window.rejectKycRequest = function(){ /* disabled */ };
+  // don't override approveKyc if old exists with __fixed - leave old
+  console.log('%c[Admin] New KYC accept disabled — old flow','color:#94a3b8');
+})();
+
+
+/* ===== KYC ACCEPT/DECLINE/DELETE/RENEW FIXED ===== */
+function kycUpdateAllRequestPaths(phone, status){
+  phone = String(phone||'').trim();
+  if(!phone) return Promise.resolve();
+  var paths = ['admin_queues/kyc_requests', 'admin_queues/kyc', 'kyc_requests'];
+  var tasks = paths.map(function(path){
+    return db.ref(path).once('value').then(function(snap){
+      if(!snap.exists()) return;
+      var updates = {};
+      snap.forEach(function(c){
+        var v = c.val()||{};
+        var p = String(v.phone||v.userPhone||v.user||c.key||'');
+        if(p === phone || c.key === phone){
+          updates[c.key+'/status'] = status;
+          updates[c.key+'/'+(status==='approved'?'approvedAt':'rejectedAt')] = Date.now();
+        }
+      });
+      // also direct child phone key
+      updates[phone+'/status'] = status;
+      if(Object.keys(updates).length) return db.ref(path).update(updates);
+    }).catch(function(){});
+  });
+  return Promise.all(tasks);
+}
+
+window.approveKyc = function(phone){
+  phone = String(phone||'').trim();
+  if(!phone){ try{triggerToast('Phone missing','error');}catch(e){} return; }
+  var btnLock = true;
+  Promise.all([
+    db.ref('users/'+phone).update({
+      kycStatus: 'verified',
+      verificationStatus: 'verified',
+      isVerified: true,
+      kycApprovedAt: Date.now(),
+      kycApprovedBy: 'admin'
+    }),
+    kycUpdateAllRequestPaths(phone, 'approved')
+  ]).then(function(){
+    try{ triggerToast('KYC Accepted — Verified'); }catch(e){}
+    try{ loadKycNow(); }catch(e){}
+  }).catch(function(e){
+    try{ triggerToast('Accept failed: '+(e&&e.message),'error'); }catch(err){}
+  });
+};
+
+window.rejectKyc = function(phone){
+  phone = String(phone||'').trim();
+  if(!phone){ try{triggerToast('Phone missing','error');}catch(e){} return; }
+  Promise.all([
+    db.ref('users/'+phone).update({
+      kycStatus: 'rejected',
+      verificationStatus: 'rejected',
+      kycRejectedAt: Date.now()
+    }),
+    kycUpdateAllRequestPaths(phone, 'rejected')
+  ]).then(function(){
+    try{ triggerToast('KYC Declined','error'); }catch(e){}
+    try{ loadKycNow(); }catch(e){}
+  }).catch(function(e){
+    try{ triggerToast('Decline failed','error'); }catch(err){}
+  });
+};
+
+window.deleteKycRequest = function(phoneOrId){
+  phoneOrId = String(phoneOrId||'').trim();
+  if(!phoneOrId) return;
+  if(!confirm('Delete this KYC request record?')) return;
+  var paths = ['admin_queues/kyc_requests', 'admin_queues/kyc', 'kyc_requests'];
+  var tasks = [];
+  paths.forEach(function(path){
+    tasks.push(db.ref(path+'/'+phoneOrId).remove().catch(function(){}));
+    tasks.push(db.ref(path).once('value').then(function(snap){
+      if(!snap.exists()) return;
+      var dels = [];
+      snap.forEach(function(c){
+        var v = c.val()||{};
+        var p = String(v.phone||v.userPhone||'');
+        if(p === phoneOrId || c.key === phoneOrId){
+          dels.push(db.ref(path+'/'+c.key).remove());
+        }
+      });
+      return Promise.all(dels);
+    }).catch(function(){}));
+  });
+  Promise.all(tasks).then(function(){
+    try{ triggerToast('KYC request deleted'); }catch(e){}
+    try{ loadKycNow(); }catch(e){}
+  });
+};
+
+/** Force user to redo KYC from scratch */
+window.renewKyc = function(phone){
+  phone = String(phone||'').trim();
+  if(!phone) return;
+  if(!confirm('Renew KYC? User will need to submit again.')) return;
+  var reset = {
+    kycStatus: 'unverified',
+    verificationStatus: 'unverified',
+    isVerified: false,
+    kycDetails: null,
+    cnicLast4: null,
+    dob: null,
+    dateOfBirth: null,
+    fullName: null,
+    kycRenewedAt: Date.now(),
+    kycApprovedAt: null
+  };
+  Promise.all([
+    db.ref('users/'+phone).update(reset),
+    // clear old request statuses to deleted-ish and remove
+    kycUpdateAllRequestPaths(phone, 'renewed').then(function(){
+      return deleteKycRequest(phone);
+    })
+  ]).then(function(){
+    // also clear name fields carefully - only kyc related
+    db.ref('users/'+phone+'/kycDetails').remove();
+    db.ref('users/'+phone+'/cnicLast4').remove();
+    try{ triggerToast('KYC renewed — user must submit again'); }catch(e){}
+    try{ loadKycNow(); }catch(e){}
+  });
+};
+
+// Enhance renderKyc to include Delete + Renew buttons
+(function(){
+  var _render = window.renderKyc;
+  if(typeof _render !== 'function') return;
+  window.renderKyc = function(rows){
+    _render(rows);
+    var box = document.getElementById('kyc-list');
+    if(!box) return;
+    // inject extra actions on each card
+    setTimeout(function(){
+      box.querySelectorAll('.glass, .rounded-2xl').forEach(function(card){
+        if(card.getAttribute('data-kyc-extra')) return;
+        var mono = card.querySelector('.font-mono, .text-cyan-400');
+        var phone = mono ? (mono.textContent||'').trim() : '';
+        if(!phone) return;
+        card.setAttribute('data-kyc-extra','1');
+        var extra = document.createElement('div');
+        extra.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px';
+        extra.innerHTML =
+          '<button type="button" onclick="event.stopPropagation();approveKyc(\''+phone.replace(/'/g,"")+'\')" style="padding:8px 12px;border:none;border-radius:10px;background:#059669;color:#fff;font-size:10px;font-weight:900">ACCEPT</button>'+
+          '<button type="button" onclick="event.stopPropagation();rejectKyc(\''+phone.replace(/'/g,"")+'\')" style="padding:8px 12px;border:none;border-radius:10px;background:#e11d48;color:#fff;font-size:10px;font-weight:900">DECLINE</button>'+
+          '<button type="button" onclick="event.stopPropagation();deleteKycRequest(\''+phone.replace(/'/g,"")+'\')" style="padding:8px 12px;border:none;border-radius:10px;background:#475569;color:#fff;font-size:10px;font-weight:900">DELETE</button>'+
+          '<button type="button" onclick="event.stopPropagation();renewKyc(\''+phone.replace(/'/g,"")+'\')" style="padding:8px 12px;border:none;border-radius:10px;background:#b45309;color:#fff;font-size:10px;font-weight:900">RENEW KYC</button>';
+        card.appendChild(extra);
+      });
+    }, 50);
+  };
+})();
+
+console.log('%c[Admin] KYC accept/decline/delete/renew fixed','color:#34d399');
+
+
+/* ===== ADMIN DUPLICATE / FAKE / BUG USERS CLEANUP ===== */
+function detectProblemUsers(usersMap){
+  var list = [];
+  var byName = {};
+  var byCnic = {};
+  Object.keys(usersMap||{}).forEach(function(phone){
+    var u = usersMap[phone]||{};
+    var row = { phone:phone, username:u.username||"", fullName:u.fullName||u.name||"", cnic:u.cnicLast4||(u.kycDetails&&u.kycDetails.cnicLast4)||"", balance:Number(u.balance||0), createdAt:u.createdAt||u.joinDate||0, raw:u };
+    list.push(row);
+    var nk = (row.username||"").toLowerCase().trim();
+    if(nk){ (byName[nk]=byName[nk]||[]).push(row); }
+    if(row.cnic){ (byCnic[row.cnic]=byCnic[row.cnic]||[]).push(row); }
+  });
+  var flagged = {};
+  function mark(row, reason){
+    if(!flagged[row.phone]) flagged[row.phone] = { phone:row.phone, username:row.username, fullName:row.fullName, balance:row.balance, reasons:[] };
+    if(flagged[row.phone].reasons.indexOf(reason)<0) flagged[row.phone].reasons.push(reason);
+  }
+  // duplicate username
+  Object.keys(byName).forEach(function(k){
+    if(byName[k].length>1) byName[k].forEach(function(r){ mark(r, "Duplicate username"); });
+  });
+  // duplicate cnic
+  Object.keys(byCnic).forEach(function(k){
+    if(byCnic[k].length>1) byCnic[k].forEach(function(r){ mark(r, "Duplicate CNIC last4"); });
+  });
+  // bug-like: empty username, invalid phone, zero activity weird
+  list.forEach(function(r){
+    if(!r.username || r.username.length<2) mark(r, "Missing/short username");
+    if(!/^[0-9+]{10,}$/.test(String(r.phone))) mark(r, "Invalid phone key");
+    if(String(r.phone).indexOf("undefined")>=0 || String(r.phone).indexOf("null")>=0) mark(r, "Bug phone key");
+    var u = r.raw||{};
+    // duplicate exact same createdAt + same name pattern
+  });
+  // same fullName + same cnic already covered; same balance+name spam
+  var byCombo = {};
+  list.forEach(function(r){
+    var key = (r.fullName||"").toLowerCase()+"|"+(r.cnic||"")+"|"+(r.username||"").toLowerCase();
+    if(key.length>3){ (byCombo[key]=byCombo[key]||[]).push(r); }
+  });
+  Object.keys(byCombo).forEach(function(k){
+    if(byCombo[k].length>1) byCombo[k].forEach(function(r){ mark(r, "Near-identical profile"); });
+  });
+  return Object.keys(flagged).map(function(k){ return flagged[k]; });
+}
+
+window.loadDuplicateUsersAdmin = function(){
+  var box = document.getElementById("dup-users-box");
+  if(!box) return;
+  box.innerHTML = '<div class="text-slate-500 text-xs py-3">Scanning…</div>';
+  db.ref("users").once("value", function(snap){
+    if(!snap.exists()){ box.innerHTML = '<div class="text-slate-500 text-sm">No users</div>'; return; }
+    var map = snap.val()||{};
+    var rows = detectProblemUsers(map);
+    window._dupUserRows = rows;
+    if(!rows.length){ box.innerHTML = '<div class="text-emerald-400 text-sm font-bold py-3">No duplicate/fake/bug users found</div>'; return; }
+    box.innerHTML = '<div class="text-[10px] text-amber-300 font-bold mb-2">'+rows.length+' problem account(s)</div>' + rows.map(function(r){
+      return '<div class="glass rounded-xl p-3 mb-2 border border-rose-500/20">'+
+        '<div class="flex justify-between gap-2"><b class="text-white text-sm">'+esc(r.username||r.phone)+'</b>'+
+        '<span class="text-[10px] font-mono text-cyan-400">'+esc(r.phone)+'</span></div>'+
+        '<div class="text-[10px] text-rose-300 mt-1">'+esc((r.reasons||[]).join(" · "))+'</div>'+
+        '<div class="text-[10px] text-slate-400 mt-1">Bal: Rs '+Number(r.balance||0).toLocaleString()+'</div>'+
+        '<div class="flex gap-2 mt-2">'+
+        '<button type="button" onclick="openUserDetail && openUserDetail(\''+String(r.phone).replace(/'/g,"")+'\')" class="px-2 py-1 rounded-lg bg-slate-700 text-[10px] font-bold">View</button>'+
+        '<button type="button" onclick="permanentDeleteUser(\''+String(r.phone).replace(/'/g,"")+'\')" class="px-2 py-1 rounded-lg bg-rose-700 text-[10px] font-black">Permanent Delete</button>'+
+        '</div></div>';
+    }).join("");
+  });
+};
+
+window.permanentDeleteUser = function(phone){
+  phone = String(phone||"").trim();
+  if(!phone) return;
+  if(!confirm("PERMANENT delete user "+phone+"? Yeh wapas nahi aayega.")) return;
+  if(!confirm("Confirm again: delete "+phone+" forever?")) return;
+  var paths = [
+    "users/"+phone,
+    "admin_queues/kyc_requests",
+    "admin_queues/deposits",
+    "admin_queues/withdrawals"
+  ];
+  db.ref("users/"+phone).remove()
+    .then(function(){
+      // scrub queues
+      return Promise.all([
+        db.ref("admin_queues/kyc_requests").once("value").then(function(s){
+          if(!s.exists()) return;
+          var up={};
+          s.forEach(function(c){ var v=c.val()||{}; if(String(v.phone||v.userPhone||c.key)===phone) up[c.key]=null; });
+          if(Object.keys(up).length) return db.ref("admin_queues/kyc_requests").update(up);
+        }),
+        db.ref("kyc_requests").once("value").then(function(s){
+          if(!s.exists()) return;
+          var up={};
+          s.forEach(function(c){ var v=c.val()||{}; if(String(v.phone||c.key)===phone) up[c.key]=null; });
+          if(Object.keys(up).length) return db.ref("kyc_requests").update(up);
+        })
+      ]);
+    })
+    .then(function(){
+      try{ triggerToast("Deleted permanently: "+phone); }catch(e){}
+      loadDuplicateUsersAdmin();
+    })
+    .catch(function(e){ try{ triggerToast("Delete failed","error"); }catch(err){} });
+};
+
+window.permanentDeleteAllFlagged = function(){
+  var rows = window._dupUserRows || [];
+  if(!rows.length){ try{triggerToast("None flagged");}catch(e){} return; }
+  if(!confirm("Delete ALL "+rows.length+" flagged users permanently?")) return;
+  var i = 0;
+  function next(){
+    if(i>=rows.length){ try{triggerToast("Batch delete done");}catch(e){} loadDuplicateUsersAdmin(); return; }
+    var phone = rows[i++].phone;
+    db.ref("users/"+phone).remove().finally(next);
+  }
+  next();
+};
+
+function ensureDupUsersDashboard(){
+  if(document.getElementById("dup-users-panel")) return;
+  var host = document.getElementById("section-overview") || document.getElementById("section-dashboard") || document.body;
+  var panel = document.createElement("div");
+  panel.id = "dup-users-panel";
+  panel.className = "glass rounded-2xl p-4 space-y-2 mt-3";
+  panel.innerHTML = '<div class="flex justify-between items-center gap-2 flex-wrap">'+
+    '<h3 class="font-black text-rose-300 text-sm">Duplicate / Fake / Bug Users</h3>'+
+    '<div class="flex gap-2">'+
+    '<button type="button" onclick="loadDuplicateUsersAdmin()" class="px-3 py-1.5 rounded-xl bg-slate-700 text-[10px] font-bold">Scan</button>'+
+    '<button type="button" onclick="permanentDeleteAllFlagged()" class="px-3 py-1.5 rounded-xl bg-rose-700 text-[10px] font-black">Delete All Flagged</button>'+
+    '</div></div>'+
+    '<p class="text-[10px] text-slate-400">Same username, CNIC, identical profiles, invalid keys</p>'+
+    '<div id="dup-users-box" class="max-h-80 overflow-y-auto"></div>';
+  host.appendChild(panel);
+  loadDuplicateUsersAdmin();
+}
+
+setTimeout(ensureDupUsersDashboard, 900);
+(function(){
+  var _ss = window.showSection;
+  if(typeof _ss==="function"){
+    window.showSection = function(id){
+      _ss(id);
+      if(id==="overview"||id==="dashboard"||id==="users") setTimeout(ensureDupUsersDashboard, 200);
+    };
+  }
+})();
+console.log("%c[Admin] Duplicate user cleanup","color:#fb7185");
+
+
+/* ===== NULL / BUG USERS HARD DETECT + DELETE ===== */
+(function(){
+  var _det = window.detectProblemUsers;
+  window.detectProblemUsers = function(usersMap){
+    var base = typeof _det==='function' ? _det(usersMap) : [];
+    var flagged = {};
+    base.forEach(function(r){ flagged[r.phone]=r; });
+    Object.keys(usersMap||{}).forEach(function(phone){
+      var u = usersMap[phone]||{};
+      var reasons = [];
+      var p = String(phone||'');
+      if(p==='null' || p==='undefined' || p==='' || p==='NaN') reasons.push('Null/invalid key');
+      if(String(u.username||'')==='null' || String(u.username||'')==='undefined') reasons.push('Null username');
+      if(!u.username && !u.fullName && !u.name && Number(u.balance||0)===0) reasons.push('Empty bug profile');
+      if(String(u.username||'').toLowerCase()==='user' && Number(u.balance||0)===0) reasons.push('Generic User shell');
+      if(reasons.length){
+        if(!flagged[phone]) flagged[phone]={ phone:phone, username:u.username||'', fullName:u.fullName||u.name||'', balance:Number(u.balance||0), reasons:[] };
+        reasons.forEach(function(x){ if(flagged[phone].reasons.indexOf(x)<0) flagged[phone].reasons.push(x); });
+      }
+    });
+    return Object.keys(flagged).map(function(k){ return flagged[k]; });
+  };
+})();
+
+// Highlight null rows in users list with Delete button
+setInterval(function(){
+  document.querySelectorAll('#users-list .glass, #users-list > div').forEach(function(card){
+    var mono = card.querySelector('.font-mono, .text-cyan-400');
+    var phone = mono ? (mono.textContent||'').trim() : '';
+    var title = card.querySelector('.font-extrabold, .font-bold, b, h3');
+    var name = title ? (title.textContent||'').trim() : '';
+    var bad = phone==='null' || phone==='undefined' || name==='User' && (phone.indexOf('null')>=0 || !/^[0-9+]{10,}$/.test(phone));
+    if(!bad && phone==='null') bad = true;
+    if(!bad) return;
+    if(card.getAttribute('data-null-clean')) return;
+    card.setAttribute('data-null-clean','1');
+    card.style.border = '1px solid rgba(244,63,94,.45)';
+    var b = document.createElement('button');
+    b.type='button';
+    b.textContent='Delete Null/Bug';
+    b.style.cssText='margin-top:8px;width:100%;padding:8px;border:none;border-radius:10px;background:#be123c;color:#fff;font-size:10px;font-weight:900';
+    b.onclick=function(e){ e.stopPropagation(); permanentDeleteUser(phone); };
+    card.appendChild(b);
+  });
+}, 2000);
+
+console.log('%c[Admin] Null user cleanup boost','color:#fb7185');
+
+
+/* ===== ADMIN CHANGELOGS + PLAN DEACTIVATE APPROVE ===== */
+function ensureChangelogAdmin(){ /* disabled - changelogs not in admin */ }
+
+function ensurePlanDeactAdmin(){
+  if(document.getElementById('plan-deact-admin')) return;
+  var host = document.getElementById('admin-changelog-box') || document.getElementById('section-overview') || document.body;
+  var box = document.createElement('div');
+  box.id = 'plan-deact-admin';
+  box.className = 'glass rounded-2xl p-4 space-y-2 mt-3';
+  box.innerHTML = '<h3 class="font-black text-orange-300 text-sm">Plan Deactivate Requests</h3><div id="plan-deact-list" class="space-y-2 max-h-64 overflow-y-auto"></div>';
+  host.appendChild(box);
+  db.ref('admin_queues/plan_deactivate').on('value', function(snap){
+    var list = document.getElementById('plan-deact-list');
+    if(!list) return;
+    if(!snap.exists()){ list.innerHTML = '<div class="text-slate-500 text-xs">No requests</div>'; return; }
+    var rows = [];
+    snap.forEach(function(c){ rows.push(Object.assign({id:c.key}, c.val())); });
+    rows.sort(function(a,b){ return (b.timestamp||0)-(a.timestamp||0); });
+    list.innerHTML = rows.map(function(r){
+      var st = String(r.status||'pending');
+      return '<div class="p-3 rounded-xl bg-slate-900/70 border border-slate-700/50">'+
+        '<div class="font-bold text-white text-sm">'+esc(r.username||r.phone)+'</div>'+
+        '<div class="text-[10px] text-cyan-400 font-mono">'+esc(r.phone)+'</div>'+
+        '<div class="text-[10px] text-slate-300 mt-1">Plan: <b>'+esc(r.planName)+'</b> · Cost Rs '+Number(r.planCost||0).toLocaleString()+' · Collected Rs '+Number(r.collected||0).toLocaleString()+'</div>'+
+        '<div class="text-[10px] text-amber-200 mt-1">'+esc(r.reason||'')+'</div>'+
+        '<div class="text-[10px] mt-1 uppercase font-bold '+(st==='pending'?'text-amber-400':st==='approved'?'text-emerald-400':'text-slate-400')+'">'+st+'</div>'+
+        (st==='pending' ? '<div class="flex gap-2 mt-2">'+
+          '<button type="button" onclick="approvePlanDeact(\''+r.id+'\',\''+String(r.phone).replace(/'/g,"")+'\')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-[10px] font-black">Accept + Refund</button>'+
+          '<button type="button" onclick="rejectPlanDeact(\''+r.id+'\')" class="px-3 py-1.5 rounded-lg bg-rose-700 text-[10px] font-black">Reject</button></div>' : '')+
+        '</div>';
+    }).join('');
+  });
+}
+window.approvePlanDeact = function(id, phone){
+  if(!phone) return;
+  db.ref('users/'+phone).once('value').then(function(snap){
+    var u = snap.val()||{};
+    var plan = u.activePlan;
+    if(!plan){
+      return db.ref('admin_queues/plan_deactivate/'+id).update({ status:'approved', note:'no plan', at:Date.now() });
+    }
+    var cost = Number(plan.cost||0);
+    var collected = Number(plan.accumulatedYieldCollected||0);
+    // refund investment, deduct collected profit from balance
+    var bal = Number(u.balance||0) + cost - collected;
+    if(bal < 0) bal = 0;
+    return db.ref('users/'+phone).transaction(function(cur){
+      if(!cur) return;
+      cur.balance = Number(cur.balance||0) + Number((cur.activePlan&&cur.activePlan.cost)||cost) - Number((cur.activePlan&&cur.activePlan.accumulatedYieldCollected)||collected);
+      if(cur.balance < 0) cur.balance = 0;
+      cur.activePlan = null;
+      if(!cur.logs) cur.logs = {};
+      var lid = 'LOG-PDEACT-'+Date.now();
+      cur.logs[lid] = { id:lid, type:'plan', title:'Plan deactivated (refund)', amount:cost, timestamp:Date.now(), status:'Success' };
+      return cur;
+    }).then(function(){
+      return db.ref('admin_queues/plan_deactivate/'+id).update({ status:'approved', approvedAt:Date.now() });
+    });
+  }).then(function(){ try{triggerToast('Plan deactivated + refund done');}catch(e){} });
+};
+window.rejectPlanDeact = function(id){
+  db.ref('admin_queues/plan_deactivate/'+id).update({ status:'rejected', rejectedAt:Date.now() });
+  try{triggerToast('Rejected','error');}catch(e){}
+};
+
+setTimeout(function(){ /* ensureChangelogAdmin disabled */; ensurePlanDeactAdmin(); }, 1000);
+console.log('%c[Admin] Changelogs + plan deact','color:#fbbf24');
+
+
+/* ===== ADMIN v6.6: sessions, events, games bg, no changelogs ===== */
+document.title = 'Prime Horizon · Admin v6.6';
+
+// Remove changelog admin UI
+setInterval(function(){
+  var cl = document.getElementById('admin-changelog-box');
+  if(cl) cl.remove();
+}, 1000);
+window.postChangelogAdmin = function(){ try{triggerToast('Changelogs sirf Developer panel se','error');}catch(e){} };
+
+/* Admin sessions: track this device + list */
+(function(){
+  function deviceId(){
+    var id = localStorage.getItem('ph_admin_device_id');
+    if(!id){ id = 'ADM-'+Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem('ph_admin_device_id', id); }
+    return id;
+  }
+  function registerAdminSession(){
+    if(!window.db) return;
+    var id = deviceId();
+    var ua = navigator.userAgent||'';
+    var name = /Mobile|Android|iPhone/i.test(ua) ? 'Mobile Browser' : 'Desktop Browser';
+    if(/Chrome/i.test(ua)) name = 'Chrome';
+    if(/Firefox/i.test(ua)) name = 'Firefox';
+    if(/Safari/i.test(ua) && !/Chrome/i.test(ua)) name = 'Safari';
+    var payload = {
+      id: id,
+      name: name,
+      ua: ua.slice(0,120),
+      lastSeen: Date.now(),
+      createdAt: Date.now()
+    };
+    db.ref('admin_sessions/'+id).update(payload);
+    // heartbeat
+    setInterval(function(){
+      db.ref('admin_sessions/'+id+'/lastSeen').set(Date.now());
+    }, 60000);
+  }
+  window.loadAdminSessionsPanel = function(){
+    var box = document.getElementById('admin-sessions-list');
+    if(!box) return;
+    db.ref('admin_sessions').once('value', function(snap){
+      if(!snap.exists()){ box.innerHTML = '<div class="text-slate-500 text-xs">No sessions</div>'; return; }
+      var rows = [];
+      snap.forEach(function(c){ rows.push(Object.assign({id:c.key}, c.val())); });
+      rows.sort(function(a,b){ return (b.lastSeen||0)-(a.lastSeen||0); });
+      var me = localStorage.getItem('ph_admin_device_id');
+      box.innerHTML = '<div class="text-[10px] text-slate-400 mb-2">Total devices: <b class="text-white">'+rows.length+'</b></div>' + rows.map(function(r){
+        var mine = r.id === me;
+        return '<div class="flex justify-between items-center gap-2 p-2 rounded-lg bg-slate-900/60 mb-1">'+
+          '<div><div class="text-xs font-bold text-white">'+esc(r.name||'Device')+(mine?' · <span class="text-emerald-400">This device</span>':'')+'</div>'+
+          '<div class="text-[10px] text-slate-500">Last: '+(r.lastSeen?new Date(r.lastSeen).toLocaleString():'—')+'</div></div>'+
+          '<button type="button" onclick="logoutAdminSession(\''+r.id+'\')" class="px-2 py-1 rounded bg-rose-700 text-[10px] font-black">Logout</button></div>';
+      }).join('');
+    });
+  };
+  window.logoutAdminSession = function(id){
+    db.ref('admin_sessions/'+id).remove().then(function(){
+      if(id === localStorage.getItem('ph_admin_device_id')){
+        try{ sessionStorage.clear(); }catch(e){}
+        location.reload();
+      } else {
+        loadAdminSessionsPanel();
+        try{triggerToast('Session logged out');}catch(e){}
+      }
+    });
+  };
+  window.logoutAllAdminSessions = function(){
+    if(!confirm('Logout all admin devices?')) return;
+    db.ref('admin_sessions').remove().then(function(){
+      try{ sessionStorage.clear(); }catch(e){}
+      location.reload();
+    });
+  };
+  function ensureSessionsUI(){
+    if(document.getElementById('admin-sessions-panel')) return;
+    var host = document.getElementById('section-overview') || document.getElementById('section-settings') || document.body;
+    var panel = document.createElement('div');
+    panel.id = 'admin-sessions-panel';
+    panel.className = 'glass rounded-2xl p-4 space-y-2 mt-3';
+    panel.innerHTML = '<div class="flex justify-between items-center"><h3 class="font-black text-cyan-300 text-sm">Admin Sessions</h3>'+
+      '<button type="button" onclick="logoutAllAdminSessions()" class="px-2 py-1 rounded-lg bg-rose-700 text-[10px] font-black">Logout All</button></div>'+
+      '<div id="admin-sessions-list" class="max-h-48 overflow-y-auto"></div>'+
+      '<button type="button" onclick="loadAdminSessionsPanel()" class="text-[10px] text-slate-400 font-bold">Refresh</button>';
+    host.appendChild(panel);
+    loadAdminSessionsPanel();
+  }
+  setTimeout(function(){ registerAdminSession(); ensureSessionsUI(); }, 1200);
+})();
+
+/* Lucky draw dates + custom events */
+function ensureEventsAdmin(){
+  if(document.getElementById('admin-events-box')) return;
+  var host = document.getElementById('admin-sessions-panel') || document.getElementById('section-overview') || document.body;
+  var box = document.createElement('div');
+  box.id = 'admin-events-box';
+  box.className = 'glass rounded-2xl p-4 space-y-2 mt-3';
+  box.innerHTML = '<h3 class="font-black text-violet-300 text-sm">Lucky Draw / Custom Event</h3>'+
+    '<input id="ev-title" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Event title (Lucky Draw / Custom)">'+
+    '<label class="text-[10px] text-slate-400">Start</label><input id="ev-start" type="datetime-local" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm">'+
+    '<label class="text-[10px] text-slate-400">End</label><input id="ev-end" type="datetime-local" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm">'+
+    '<input id="ev-fee" type="number" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Entry fee (optional)">'+
+    '<button type="button" onclick="saveAdminEvent()" class="w-full py-2 bg-violet-600 rounded-xl text-xs font-black">Save Event</button>'+
+    '<div id="ev-list" class="text-xs space-y-1 max-h-32 overflow-y-auto"></div>';
+  host.appendChild(box);
+  db.ref('events').limitToLast(8).on('value', function(snap){
+    var list = document.getElementById('ev-list');
+    if(!list) return;
+    if(!snap.exists()){ list.innerHTML = '<div class="text-slate-500">No events</div>'; return; }
+    var rows=[];
+    snap.forEach(function(c){ rows.push(Object.assign({id:c.key},c.val())); });
+    rows.reverse();
+    list.innerHTML = rows.map(function(r){
+      return '<div class="p-2 rounded bg-slate-900/50 flex justify-between gap-2"><span><b>'+esc(r.title)+'</b><br><span class="text-slate-500">'+new Date(r.startAt||0).toLocaleString()+' → '+new Date(r.endAt||0).toLocaleString()+'</span></span>'+
+        '<button type="button" class="text-rose-400 font-bold" onclick="db.ref(\'events/'+r.id+'\').remove()">×</button></div>';
+    }).join('');
+  });
+}
+window.saveAdminEvent = function(){
+  var title = (document.getElementById('ev-title').value||'').trim() || 'Lucky Draw';
+  var start = document.getElementById('ev-start').value;
+  var end = document.getElementById('ev-end').value;
+  var fee = Number(document.getElementById('ev-fee').value||0);
+  if(!start || !end){ try{triggerToast('Start/End required','error');}catch(e){} return; }
+  var id = 'EV-'+Date.now();
+  var payload = {
+    title: title,
+    startAt: new Date(start).getTime(),
+    endAt: new Date(end).getTime(),
+    entryFee: fee,
+    createdAt: Date.now(),
+    type: 'event'
+  };
+  Promise.all([
+    db.ref('events/'+id).set(payload),
+    db.ref('admin_settings/lucky_draw').set(payload)
+  ]).then(function(){ try{triggerToast('Event saved');}catch(e){} });
+};
+setTimeout(ensureEventsAdmin, 1400);
+
+/* Games background upload (URL) */
+function ensureGamesBgAdmin(){
+  if(document.getElementById('admin-games-bg')) return;
+  var host = document.getElementById('admin-events-box') || document.body;
+  var box = document.createElement('div');
+  box.id = 'admin-games-bg';
+  box.className = 'glass rounded-2xl p-4 space-y-2 mt-3';
+  box.innerHTML = '<h3 class="font-black text-emerald-300 text-sm">Games Section Background</h3>'+
+    '<input id="games-bg-url" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Image URL">'+
+    '<input id="games-play-url" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="Play Games link (optional)">'+
+    '<button type="button" onclick="saveGamesBg()" class="w-full py-2 bg-emerald-600 rounded-xl text-xs font-black">Save Games Background</button>';
+  host.appendChild(box);
+}
+window.saveGamesBg = function(){
+  var url = (document.getElementById('games-bg-url').value||'').trim();
+  var link = (document.getElementById('games-play-url').value||'').trim();
+  // user app reads admin_settings/game_button_bg
+  db.ref('admin_settings/game_button_bg').set({ url: url, playUrl: link, updatedAt: Date.now() });
+  db.ref('admin_settings/games_section').set({ backgroundUrl:url, playUrl:link, updatedAt:Date.now() });
+  try{triggerToast('Games background saved');}catch(e){}
+};
+setTimeout(ensureGamesBgAdmin, 1600);
+
+console.log('%c[Admin] v6.6 sessions/events/games','color:#67e8f9');
+
 </script>
+
+<script>
+/* ===== ADMIN v6.6 ALIGN WITH USER APP ===== */
+(function(){
+  "use strict";
+
+  // Never show changelogs in admin
+  window.postChangelogAdmin = function(){
+    try{ if(typeof triggerToast==="function") triggerToast("Changelogs developer panel se — admin mein nahi","error"); }catch(e){}
+  };
+  setInterval(function(){
+    ["admin-changelog-box","cl-title","cl-body","cl-admin-list"].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el){ try{ el.remove(); }catch(e){} }
+    });
+  }, 1500);
+
+  function getDb(){
+    return window.db || (typeof firebase !== "undefined" && firebase.apps && firebase.apps.length && firebase.database()) || null;
+  }
+
+  /* Coins rate: 100 coins = Rs 1 (admin can change coinsPerRs) */
+  function ensureCoinsRateUI(){
+    if(document.getElementById("admin-coins-rate-box")) return;
+    var host = document.getElementById("section-settings") || document.getElementById("section-dashboard") || document.getElementById("admin-games-bg") || document.body;
+    var box = document.createElement("div");
+    box.id = "admin-coins-rate-box";
+    box.className = "glass rounded-2xl p-4 space-y-2 mt-3";
+    box.innerHTML = '<h3 class="font-black text-amber-300 text-sm">Affiliate Coins Rate</h3>'+
+      '<p class="text-[10px] text-slate-400">Default: <b class="text-white">100 coins = Rs 1</b>. Change how many coins equal Rs 1.</p>'+
+      '<div class="flex gap-2 items-center">'+
+      '<input id="coins-per-rs" type="number" min="1" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm" placeholder="100">'+
+      '<button type="button" onclick="saveCoinsRateAdmin()" class="px-4 py-2 bg-amber-600 rounded-xl text-xs font-black">Save</button></div>'+
+      '<div id="coins-rate-status" class="text-[10px] text-slate-500"></div>';
+    host.appendChild(box);
+    var dbRef = getDb();
+    if(dbRef){
+      dbRef.ref("admin_settings/coins_rate").once("value", function(snap){
+        var v = snap.val();
+        var n = 100;
+        if(v != null){
+          if(typeof v === "number") n = v;
+          else if(v.coinsPerRs) n = Number(v.coinsPerRs);
+        }
+        var inp = document.getElementById("coins-per-rs");
+        if(inp) inp.value = n > 0 ? n : 100;
+        var st = document.getElementById("coins-rate-status");
+        if(st) st.textContent = n + " coins = Rs 1";
+      });
+    }
+  }
+  window.saveCoinsRateAdmin = function(){
+    var n = Number(document.getElementById("coins-per-rs").value || 100);
+    if(!(n > 0)){ try{triggerToast("Invalid rate","error");}catch(e){} return; }
+    var dbRef = getDb();
+    if(!dbRef) return;
+    dbRef.ref("admin_settings/coins_rate").set({ coinsPerRs: n, updatedAt: Date.now() }).then(function(){
+      var st = document.getElementById("coins-rate-status");
+      if(st) st.textContent = n + " coins = Rs 1";
+      try{triggerToast("Coins rate saved");}catch(e){}
+    });
+  };
+
+  /* Plan deactivate: listen BOTH paths, badge, solid approve */
+  function ensurePlanDeactNav(){
+    if(document.getElementById("nav-plan-deact")) return;
+    var side = document.querySelector("#sidebar .custom-scroll, #sidebar .flex-1");
+    if(!side) return;
+    var div = document.createElement("div");
+    div.id = "nav-plan-deact";
+    div.className = "nav-item flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer hover:bg-slate-800";
+    div.innerHTML = '<i class="fa-solid fa-ban w-5 text-orange-400"></i><span class="font-semibold">Plan Deactivate</span><span id="badge-plan-deact" class="badge bg-orange-500 text-black ml-auto hidden">0</span>';
+    div.onclick = function(){ showSection("plan-deact"); };
+    var plans = document.getElementById("nav-plans");
+    if(plans && plans.parentNode) plans.parentNode.insertBefore(div, plans.nextSibling);
+    else side.appendChild(div);
+
+    // section
+    if(!document.getElementById("section-plan-deact")){
+      var main = document.querySelector("main");
+      if(main){
+        var sec = document.createElement("section");
+        sec.id = "section-plan-deact";
+        sec.className = "section space-y-3";
+        sec.innerHTML = '<h2 class="text-xl font-black text-orange-300">Plan Deactivate Requests</h2>'+
+          '<p class="text-xs text-slate-400">User request accept → plan null + investment refund − collected profit</p>'+
+          '<div id="plan-deact-list-main" class="space-y-2"></div>';
+        main.appendChild(sec);
+      }
+    }
+  }
+
+  function paintDeactList(snap, listId){
+    var list = document.getElementById(listId);
+    if(!list) return;
+    if(!snap || !snap.exists()){ list.innerHTML = '<div class="text-slate-500 text-xs">No requests</div>'; return; }
+    var rows = [];
+    snap.forEach(function(c){ rows.push(Object.assign({id:c.key}, c.val()||{})); });
+    rows.sort(function(a,b){ return (b.createdAt||b.timestamp||0)-(a.createdAt||a.timestamp||0); });
+    var pending = rows.filter(function(r){ return String(r.status||"pending")==="pending"; }).length;
+    var badge = document.getElementById("badge-plan-deact");
+    if(badge){
+      if(pending>0){ badge.textContent=String(pending); badge.classList.remove("hidden"); }
+      else badge.classList.add("hidden");
+    }
+    function esc(s){ return String(s||"").replace(/[<>&]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c];}); }
+    list.innerHTML = rows.map(function(r){
+      var st = String(r.status||"pending");
+      return '<div class="p-3 rounded-xl bg-slate-900/70 border border-slate-700/50">'+
+        '<div class="font-bold text-white text-sm">'+esc(r.username||r.phone)+'</div>'+
+        '<div class="text-[10px] text-cyan-400 font-mono">'+esc(r.phone)+'</div>'+
+        '<div class="text-[10px] text-amber-200 mt-1">'+esc(r.reason||"")+'</div>'+
+        '<div class="text-[10px] mt-1 uppercase font-bold '+(st==="pending"?"text-amber-400":st==="approved"?"text-emerald-400":"text-slate-400")+'">'+st+'</div>'+
+        (st==="pending" ? '<div class="flex gap-2 mt-2">'+
+          '<button type="button" onclick="approvePlanDeactV66(\''+r.id+'\',\''+String(r.phone||"").replace(/'/g,"")+'\')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-[10px] font-black">Accept + Refund</button>'+
+          '<button type="button" onclick="rejectPlanDeactV66(\''+r.id+'\')" class="px-3 py-1.5 rounded-lg bg-rose-700 text-[10px] font-black">Reject</button></div>' : '')+
+        '</div>';
+    }).join("");
+  }
+
+  function listenPlanDeact(){
+    var dbRef = getDb();
+    if(!dbRef || window._planDeactOn) return;
+    window._planDeactOn = true;
+    // user app writes admin_queues/plan_deactivate
+    dbRef.ref("admin_queues/plan_deactivate").on("value", function(snap){
+      paintDeactList(snap, "plan-deact-list-main");
+      paintDeactList(snap, "plan-deact-list");
+    });
+  }
+
+  window.approvePlanDeactV66 = function(id, phone){
+    var dbRef = getDb();
+    if(!dbRef || !phone) return;
+    dbRef.ref("users/"+phone).once("value").then(function(snap){
+      var u = snap.val()||{};
+      var plan = u.activePlan;
+      if(!plan){
+        return dbRef.ref("admin_queues/plan_deactivate/"+id).update({ status:"approved", note:"no active plan", approvedAt:Date.now() });
+      }
+      var cost = Number(plan.cost||plan.amount||0);
+      var collected = Number(plan.accumulatedYieldCollected||plan.collectedProfit||0);
+      return dbRef.ref("users/"+phone).transaction(function(cur){
+        if(!cur) return;
+        var c = Number((cur.activePlan&&(cur.activePlan.cost||cur.activePlan.amount))||cost);
+        var col = Number((cur.activePlan&&(cur.activePlan.accumulatedYieldCollected||cur.activePlan.collectedProfit))||collected);
+        cur.balance = Number(cur.balance||0) + c - col;
+        if(cur.balance < 0) cur.balance = 0;
+        cur.activePlan = null;
+        if(!cur.logs) cur.logs = {};
+        var lid = "LOG-PDEACT-"+Date.now();
+        cur.logs[lid] = { id:lid, type:"plan", title:"Plan deactivated (refund)", amount:c, timestamp:Date.now(), status:"Success" };
+        return cur;
+      }).then(function(){
+        return dbRef.ref("admin_queues/plan_deactivate/"+id).update({ status:"approved", approvedAt:Date.now() });
+      }).then(function(){
+        // clear user request flag
+        return dbRef.ref("users/"+phone+"/planDeactivateRequest").remove();
+      });
+    }).then(function(){
+      try{triggerToast("Plan deactivated + refund done");}catch(e){}
+    }).catch(function(err){
+      try{triggerToast(String(err&&err.message||err),"error");}catch(e){}
+    });
+  };
+  window.rejectPlanDeactV66 = function(id){
+    var dbRef = getDb();
+    if(!dbRef) return;
+    dbRef.ref("admin_queues/plan_deactivate/"+id).update({ status:"rejected", rejectedAt:Date.now() });
+    try{triggerToast("Rejected","error");}catch(e){}
+  };
+  // alias old names
+  window.approvePlanDeact = window.approvePlanDeactV66;
+  window.rejectPlanDeact = window.rejectPlanDeactV66;
+
+  /* Games bg label clarity */
+  function polishGamesBgUI(){
+    var box = document.getElementById("admin-games-bg");
+    if(!box) return;
+    var h = box.querySelector("h3");
+    if(h) h.textContent = "Play Games Button Background";
+    var inp = document.getElementById("games-bg-url");
+    if(inp) inp.placeholder = "Background image URL (blur light on user app)";
+  }
+
+  /* Hook showSection for plan-deact */
+  if(typeof window.showSection === "function" && !window.showSection._v66){
+    var _ss = window.showSection;
+    window.showSection = function(id){
+      _ss(id);
+      if(id === "plan-deact"){
+        document.querySelectorAll(".section").forEach(function(s){ s.classList.remove("active"); });
+        var sec = document.getElementById("section-plan-deact");
+        if(sec){ sec.classList.add("active"); sec.classList.remove("hidden"); }
+        var t = document.getElementById("top-section-title");
+        if(t) t.textContent = "Plan Deactivate";
+      }
+      if(id === "settings" || id === "dashboard") setTimeout(ensureCoinsRateUI, 100);
+    };
+    window.showSection._v66 = true;
+  }
+
+  function boot(){
+    ensurePlanDeactNav();
+    listenPlanDeact();
+    ensureCoinsRateUI();
+    polishGamesBgUI();
+  }
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", function(){ setTimeout(boot, 800); });
+  else setTimeout(boot, 800);
+  setInterval(function(){ ensurePlanDeactNav(); ensureCoinsRateUI(); polishGamesBgUI(); }, 4000);
+})();
+</script>
+
 </body>
 </html>
